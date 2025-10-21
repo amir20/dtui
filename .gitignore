@@ -1,0 +1,22 @@
+# Rust build artifacts
+/target/
+
+
+# Profile and analysis files
+*.svg
+*.json.gz
+profile.sh
+flamegraph.svg
+profile.json.gz
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backup files
+*.bak
+*.tmp
