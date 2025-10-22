@@ -1,4 +1,5 @@
 use bollard::container::{ListContainersOptions, StatsOptions};
+use bollard::system::EventsOptions;
 use bollard::Docker;
 use crossterm::{
     event::{self, Event, KeyCode},
@@ -29,6 +30,7 @@ struct ContainerInfo {
 enum AppEvent {
     ContainerUpdate(String, ContainerInfo),
     ContainerRemoved(String),
+    InitialContainerList(Vec<(String, ContainerInfo)>),
     Quit,
 }
 
@@ -86,62 +88,145 @@ async fn stream_container_stats(
 }
 
 async fn container_manager(docker: Docker, tx: mpsc::Sender<AppEvent>) {
-    let mut active_containers = HashMap::new();
+    let mut active_containers: HashMap<String, tokio::task::JoinHandle<()>> = HashMap::new();
 
-    loop {
-        // List current containers
-        let list_options = Some(ListContainersOptions::<String> {
-            all: false,
-            ..Default::default()
-        });
+    // Fetch initial list of containers
+    let list_options = Some(ListContainersOptions::<String> {
+        all: false,
+        ..Default::default()
+    });
 
-        let container_list = match docker.list_containers(list_options).await {
-            Ok(list) => list,
-            Err(_) => {
-                tokio::time::sleep(Duration::from_secs(5)).await;
-                continue;
-            }
-        };
+    if let Ok(container_list) = docker.list_containers(list_options).await {
+        let mut initial_containers = Vec::new();
 
-        // Start streams for new containers
-        for container in &container_list {
+        for container in container_list {
             let id = container.id.clone().unwrap_or_default();
+            let name = container
+                .names
+                .as_ref()
+                .and_then(|n| n.first().map(|s| s.trim_start_matches('/').to_string()))
+                .unwrap_or_default();
+            let status = container.status.clone().unwrap_or_default();
 
-            if !active_containers.contains_key(&id) {
-                let name = container
-                    .names
-                    .as_ref()
-                    .and_then(|n| n.first().map(|s| s.trim_start_matches('/').to_string()))
-                    .unwrap_or_default();
-                let status = container.status.clone().unwrap_or_default();
+            let initial_info = ContainerInfo {
+                id: id[..12.min(id.len())].to_string(),
+                name: name.clone(),
+                cpu: 0.0,
+                status: status.clone(),
+            };
 
-                let tx_clone = tx.clone();
-                let docker_clone = docker.clone();
-                let id_clone = id.clone();
+            initial_containers.push((id.clone(), initial_info));
 
-                let handle = tokio::spawn(async move {
-                    stream_container_stats(docker_clone, id_clone, name, status, tx_clone).await;
-                });
+            let tx_clone = tx.clone();
+            let docker_clone = docker.clone();
+            let id_clone = id.clone();
 
-                active_containers.insert(id, handle);
-            }
+            let handle = tokio::spawn(async move {
+                stream_container_stats(docker_clone, id_clone, name, status, tx_clone).await;
+            });
+
+            active_containers.insert(id, handle);
         }
 
-        // Check for containers that no longer exist
-        let current_ids: std::collections::HashSet<_> =
-            container_list.iter().filter_map(|c| c.id.clone()).collect();
+        // Send all initial containers in one event
+        if !initial_containers.is_empty() {
+            let _ = tx
+                .send(AppEvent::InitialContainerList(initial_containers))
+                .await;
+        }
+    }
 
-        active_containers.retain(|id, handle| {
-            if !current_ids.contains(id) {
-                handle.abort();
-                false
-            } else {
-                true
+    // Subscribe to Docker events
+    let mut filters = HashMap::new();
+    filters.insert("type".to_string(), vec!["container".to_string()]);
+    filters.insert(
+        "event".to_string(),
+        vec!["start".to_string(), "die".to_string(), "stop".to_string()],
+    );
+
+    let events_options = EventsOptions::<String> {
+        filters,
+        ..Default::default()
+    };
+
+    let mut events_stream = docker.events(Some(events_options));
+
+    while let Some(event_result) = events_stream.next().await {
+        match event_result {
+            Ok(event) => {
+                if let Some(actor) = event.actor {
+                    let container_id = actor.id.unwrap_or_default();
+                    let action = event.action.unwrap_or_default();
+
+                    match action.as_str() {
+                        "start" => {
+                            // Get container details
+                            if let Ok(inspect) = docker.inspect_container(&container_id, None).await
+                            {
+                                let name = inspect
+                                    .name
+                                    .as_ref()
+                                    .map(|n| n.trim_start_matches('/').to_string())
+                                    .unwrap_or_default();
+
+                                let status = inspect
+                                    .state
+                                    .as_ref()
+                                    .and_then(|s| s.status.as_ref())
+                                    .map(|s| format!("{:?}", s))
+                                    .unwrap_or_else(|| "running".to_string());
+
+                                // Start monitoring the new container
+                                if !active_containers.contains_key(&container_id) {
+                                    let initial_info = ContainerInfo {
+                                        id: container_id[..12.min(container_id.len())].to_string(),
+                                        name: name.clone(),
+                                        cpu: 0.0,
+                                        status: status.clone(),
+                                    };
+
+                                    let _ = tx
+                                        .send(AppEvent::InitialContainerList(vec![(
+                                            container_id.clone(),
+                                            initial_info,
+                                        )]))
+                                        .await;
+
+                                    let tx_clone = tx.clone();
+                                    let docker_clone = docker.clone();
+                                    let id_clone = container_id.clone();
+
+                                    let handle = tokio::spawn(async move {
+                                        stream_container_stats(
+                                            docker_clone,
+                                            id_clone,
+                                            name,
+                                            status,
+                                            tx_clone,
+                                        )
+                                        .await;
+                                    });
+
+                                    active_containers.insert(container_id, handle);
+                                }
+                            }
+                        }
+                        "die" | "stop" => {
+                            // Stop monitoring and notify removal
+                            if let Some(handle) = active_containers.remove(&container_id) {
+                                handle.abort();
+                                let _ = tx.send(AppEvent::ContainerRemoved(container_id)).await;
+                            }
+                        }
+                        _ => {}
+                    }
+                }
             }
-        });
-
-        // Check for new containers every 5 seconds
-        tokio::time::sleep(Duration::from_secs(5)).await;
+            Err(_) => {
+                // If event stream fails, wait and continue
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
+        }
     }
 }
 
@@ -207,6 +292,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 Ok(AppEvent::ContainerRemoved(id)) => {
                     containers.remove(&id);
+                    events_processed = true;
+                }
+                Ok(AppEvent::InitialContainerList(container_list)) => {
+                    for (id, info) in container_list {
+                        containers.insert(id, info);
+                    }
                     events_processed = true;
                 }
                 Ok(AppEvent::Quit) => {
