@@ -1,0 +1,607 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.24s
+     Running `target/debug/docker-monitor`
+[2025-10-22T00:09:32Z INFO  docker_monitor] Starting Docker Container CPU Monitor
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Found 100 running containers
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: confident_varahamihira (7568ceffe47c)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: confident_varahamihira
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: xenodochial_turing (6cc5f6384c97)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: xenodochial_turing
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: pensive_rubin (5ebe030de557)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: pensive_rubin
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: vigorous_fermi (3dcbbeb767e3)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: vigorous_fermi
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: jovial_dirac (05607320378c)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: jovial_dirac
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: nervous_johnson (4e31c0e2a7e6)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: nervous_johnson
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: angry_knuth (5226796dacd9)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: angry_knuth
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: gifted_brahmagupta (6a4eb0bd4bf6)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: gifted_brahmagupta
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: musing_hypatia (86be59903187)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: musing_hypatia
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: cool_lovelace (d075ae4875a0)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: cool_lovelace
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: recursing_cori (7644272e9fc7)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: recursing_cori
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: adoring_haslett (2b1be5a08922)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: adoring_haslett
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: inspiring_torvalds (0b6d1bd2b3e7)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: inspiring_torvalds
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: happy_hertz (e4b4ad3405bd)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: happy_hertz
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: compassionate_moore (8c51b69b5078)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: compassionate_moore
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: reverent_pasteur (dd803e13f7ee)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: reverent_pasteur
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: festive_keldysh (1694f24f67ad)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: festive_keldysh
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: fervent_banzai (28360da8fb1f)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: fervent_banzai
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: hungry_williamson (b544c2a9bf46)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: hungry_williamson
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: clever_wozniak (ad35f0137e1c)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: clever_wozniak
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: cool_chatelet (25ac13308109)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: cool_chatelet
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: objective_joliot (31abc2454cae)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: objective_joliot
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: competent_mcclintock (9387f1656b6a)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: competent_mcclintock
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: competent_fermat (e51ba5b25633)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: competent_fermat
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: clever_noyce (5b86fbcf1259)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: clever_noyce
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: zealous_cray (348dd939e6b4)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: zealous_cray
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: flamboyant_hawking (610c8bde0867)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: flamboyant_hawking
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: kind_dubinsky (d6299ca60d3c)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: kind_dubinsky
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: tender_sinoussi (5c80ad2a847e)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: tender_sinoussi
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: elated_kepler (82c9f9591aba)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: elated_kepler
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: competent_feynman (a0644f582012)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: competent_feynman
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: funny_mcnulty (06b876a2a7c6)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: funny_mcnulty
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: quirky_turing (3a14bb8091b6)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: quirky_turing
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: quirky_proskuriakova (a24e22fa20ef)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: quirky_proskuriakova
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: elated_napier (64ccfc36e69f)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: elated_napier
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: great_almeida (b668c89c15e2)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: great_almeida
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: nervous_burnell (619cd152eb75)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: nervous_burnell
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: interesting_chandrasekhar (fe6e6f8335ec)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: interesting_chandrasekhar
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: objective_swanson (503234b3946a)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: objective_swanson
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: gifted_visvesvaraya (91734029213d)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: gifted_visvesvaraya
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: jolly_noether (b1d63e8164dd)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: jolly_noether
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: quirky_bartik (c3b9a122f8b0)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: quirky_bartik
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: hardcore_rosalind (668b49f25d1a)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: hardcore_rosalind
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: beautiful_pike (556d8ccf58ee)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: beautiful_pike
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: epic_torvalds (1310ea9fdb66)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: epic_torvalds
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: quizzical_brattain (5fdd899f143a)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: quizzical_brattain
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: romantic_jemison (f3e74e120352)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: romantic_jemison
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: flamboyant_meitner (8d6a5c91da7c)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: flamboyant_meitner
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: eloquent_hellman (9ccf864e50d5)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: eloquent_hellman
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: goofy_driscoll (69a90025a269)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: goofy_driscoll
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: beautiful_liskov (60b7b4d5e6c8)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: beautiful_liskov
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: silly_bose (97b60457860d)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: silly_bose
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: funny_bartik (d2056da2d712)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: funny_bartik
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: affectionate_hawking (0b9eaaa1bbd9)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: affectionate_hawking
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: hungry_allen (3e2b5c9f15eb)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: hungry_allen
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: laughing_fermat (8031252ddfce)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: laughing_fermat
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: busy_pare (f23a1ed4fdef)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: busy_pare
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: recursing_roentgen (d97fdaa921b7)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: recursing_roentgen
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: priceless_jennings (32cf6f775bd5)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: priceless_jennings
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: elastic_leakey (63729bb385c6)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: elastic_leakey
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: sad_yonath (f6e91daea68b)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: sad_yonath
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: recursing_turing (9c727507258f)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: recursing_turing
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: epic_franklin (97c32c5ff168)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: epic_franklin
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: jovial_elgamal (ac6df37ec105)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: jovial_elgamal
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: zealous_goldberg (e8c77908cb02)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: zealous_goldberg
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: nostalgic_stonebraker (ae02ce423109)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: nostalgic_stonebraker
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: brave_mclean (e82849dea94e)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: brave_mclean
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: wonderful_jennings (b7399de79cf0)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: wonderful_jennings
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: interesting_dirac (2a7ef9fe61a6)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: interesting_dirac
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: unruffled_nobel (ac3a2b3b30ad)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: unruffled_nobel
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: great_saha (3755275eb2b3)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: great_saha
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: boring_kalam (bf05b6958d80)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: boring_kalam
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: awesome_curie (136c7e7575c3)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: awesome_curie
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: peaceful_noyce (f433af2e5ae7)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: peaceful_noyce
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: jovial_pare (bac215886e31)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: jovial_pare
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: distracted_fermi (4f45f745a9e1)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: distracted_fermi
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: boring_leavitt (3ab3eb8ab819)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: boring_leavitt
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: epic_buck (e9b78af4d79e)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: epic_buck
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: hungry_einstein (47e2d51035d8)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: hungry_einstein
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: stoic_sinoussi (488f4bd0d41e)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: stoic_sinoussi
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: zealous_nightingale (581966ff0df5)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: zealous_nightingale
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: infallible_jennings (6e17a1111d54)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: infallible_jennings
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: zen_roentgen (1d6d6353fe04)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: zen_roentgen
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: elastic_dewdney (45731e2a27a8)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: elastic_dewdney
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: heuristic_hawking (26e00724610f)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: heuristic_hawking
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: charming_kapitsa (1adb6b982c20)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: charming_kapitsa
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: exciting_leavitt (12a849fdc555)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: exciting_leavitt
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: jovial_burnell (4add742e1541)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: jovial_burnell
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: amazing_goldstine (3cdf2bccffaa)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: amazing_goldstine
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: cranky_volhard (fe5035b2e94f)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: cranky_volhard
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: upbeat_yalow (fc026bd1af90)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: upbeat_yalow
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: laughing_wilson (11e0c4d0e37b)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: laughing_wilson
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: musing_cray (47ea23b5f322)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: musing_cray
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: elegant_cartwright (2c73b293957b)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: elegant_cartwright
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: infallible_leakey (13826ef835fb)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: infallible_leakey
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: jovial_zhukovsky (f7860a65905f)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: jovial_zhukovsky
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: dreamy_hellman (31e74acc8578)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: dreamy_hellman
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: wizardly_lehmann (387d44755165)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: wizardly_lehmann
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: admiring_beaver (860cf924421c)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: admiring_beaver
+[2025-10-22T00:09:33Z INFO  docker_monitor] New container detected: pedantic_nightingale (73594838a1d2)
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Initial update sent for container: pedantic_nightingale
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: confident_varahamihira - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: xenodochial_turing - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: pensive_rubin - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: vigorous_fermi - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: jovial_dirac - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: nervous_johnson - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: angry_knuth - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: gifted_brahmagupta - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: musing_hypatia - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: cool_lovelace - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: recursing_cori - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: adoring_haslett - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: inspiring_torvalds - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: happy_hertz - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: compassionate_moore - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: reverent_pasteur - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: festive_keldysh - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: fervent_banzai - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: hungry_williamson - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: clever_wozniak - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: cool_chatelet - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: objective_joliot - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: competent_mcclintock - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: competent_fermat - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: clever_noyce - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: zealous_cray - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: flamboyant_hawking - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: kind_dubinsky - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: tender_sinoussi - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: elated_kepler - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: competent_feynman - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: funny_mcnulty - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: quirky_turing - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: quirky_proskuriakova - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: elated_napier - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: great_almeida - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: nervous_burnell - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: interesting_chandrasekhar - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: objective_swanson - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: gifted_visvesvaraya - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: jolly_noether - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: quirky_bartik - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: hardcore_rosalind - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: beautiful_pike - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: epic_torvalds - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: quizzical_brattain - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: romantic_jemison - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: flamboyant_meitner - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: eloquent_hellman - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: goofy_driscoll - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: beautiful_liskov - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: silly_bose - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: funny_bartik - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: affectionate_hawking - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: hungry_allen - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: laughing_fermat - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: busy_pare - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: recursing_roentgen - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: priceless_jennings - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: elastic_leakey - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: sad_yonath - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: recursing_turing - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: epic_franklin - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: jovial_elgamal - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: zealous_goldberg - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: nostalgic_stonebraker - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: brave_mclean - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: wonderful_jennings - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: interesting_dirac - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: unruffled_nobel - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: great_saha - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: boring_kalam - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: awesome_curie - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: peaceful_noyce - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: jovial_pare - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: distracted_fermi - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: boring_leavitt - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: epic_buck - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: hungry_einstein - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: stoic_sinoussi - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: zealous_nightingale - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: infallible_jennings - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: zen_roentgen - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: elastic_dewdney - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: heuristic_hawking - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: charming_kapitsa - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: exciting_leavitt - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: jovial_burnell - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: amazing_goldstine - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: cranky_volhard - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: upbeat_yalow - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: laughing_wilson - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: musing_cray - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: elegant_cartwright - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: infallible_leakey - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: jovial_zhukovsky - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: dreamy_hellman - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: wizardly_lehmann - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: admiring_beaver - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: pedantic_nightingale - 0.00%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: gifted_brahmagupta - 0.03%
+[2025-10-22T00:09:33Z DEBUG docker_monitor] Container update: xenodochial_turing - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: xenodochial_turing - 0.01%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: nervous_johnson - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: zealous_cray - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: zen_roentgen - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: distracted_fermi - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: great_saha - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: priceless_jennings - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: cool_chatelet - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: competent_feynman - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: zealous_nightingale - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: exciting_leavitt - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: jovial_burnell - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: sad_yonath - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: epic_buck - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: vigorous_fermi - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: gifted_visvesvaraya - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: great_almeida - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: recursing_cori - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: clever_wozniak - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: adoring_haslett - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: affectionate_hawking - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: dreamy_hellman - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: elated_kepler - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: romantic_jemison - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: boring_kalam - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: boring_leavitt - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: beautiful_liskov - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: confident_varahamihira - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: competent_mcclintock - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: clever_noyce - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: elated_napier - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: stoic_sinoussi - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: unruffled_nobel - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: objective_swanson - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: jovial_dirac - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: fervent_banzai - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: quirky_proskuriakova - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: hungry_einstein - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: heuristic_hawking - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: jolly_noether - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: laughing_fermat - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: compassionate_moore - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: elastic_leakey - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: quirky_bartik - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: admiring_beaver - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: pensive_rubin - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: funny_bartik - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: interesting_dirac - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: amazing_goldstine - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: jovial_zhukovsky - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: funny_mcnulty - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: objective_joliot - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: nervous_burnell - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: flamboyant_meitner - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: epic_franklin - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: musing_cray - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: festive_keldysh - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: hardcore_rosalind - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: elastic_dewdney - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: reverent_pasteur - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: busy_pare - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: jovial_pare - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: cranky_volhard - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: musing_hypatia - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: hungry_williamson - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: flamboyant_hawking - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: charming_kapitsa - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: angry_knuth - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: recursing_roentgen - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: inspiring_torvalds - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: beautiful_pike - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: wizardly_lehmann - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: upbeat_yalow - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: interesting_chandrasekhar - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: infallible_jennings - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: hungry_allen - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: zealous_goldberg - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: elegant_cartwright - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: tender_sinoussi - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: recursing_turing - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: cool_lovelace - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: happy_hertz - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: silly_bose - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: kind_dubinsky - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: awesome_curie - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: jovial_elgamal - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: epic_torvalds - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: nostalgic_stonebraker - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: infallible_leakey - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: eloquent_hellman - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: goofy_driscoll - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: quizzical_brattain - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: gifted_brahmagupta - 0.02%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: peaceful_noyce - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: pedantic_nightingale - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: quirky_turing - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: laughing_wilson - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: wonderful_jennings - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: brave_mclean - 0.03%
+[2025-10-22T00:09:34Z DEBUG docker_monitor] Container update: competent_fermat - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: competent_fermat - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: xenodochial_turing - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: nervous_johnson - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: zealous_cray - 0.04%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: zen_roentgen - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: distracted_fermi - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: great_saha - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: priceless_jennings - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: cool_chatelet - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: competent_feynman - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: zealous_nightingale - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: exciting_leavitt - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: jovial_burnell - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: sad_yonath - 0.04%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: epic_buck - 0.04%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: vigorous_fermi - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: gifted_visvesvaraya - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: great_almeida - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: recursing_cori - 0.04%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: clever_wozniak - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: adoring_haslett - 0.05%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: affectionate_hawking - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: dreamy_hellman - 0.06%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: elated_kepler - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: romantic_jemison - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: boring_kalam - 0.04%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: boring_leavitt - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: beautiful_liskov - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: confident_varahamihira - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: competent_mcclintock - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: clever_noyce - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: elated_napier - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: stoic_sinoussi - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: unruffled_nobel - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: objective_swanson - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: jovial_dirac - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: fervent_banzai - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: quirky_proskuriakova - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: hungry_einstein - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: heuristic_hawking - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: jolly_noether - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: laughing_fermat - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: compassionate_moore - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: elastic_leakey - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: quirky_bartik - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: admiring_beaver - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: pensive_rubin - 0.15%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: funny_bartik - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: interesting_dirac - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: amazing_goldstine - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: jovial_zhukovsky - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: funny_mcnulty - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: objective_joliot - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: nervous_burnell - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: flamboyant_meitner - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: epic_franklin - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: musing_cray - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: festive_keldysh - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: hardcore_rosalind - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: elastic_dewdney - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: reverent_pasteur - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: busy_pare - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: jovial_pare - 0.04%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: cranky_volhard - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: musing_hypatia - 0.04%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: hungry_williamson - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: flamboyant_hawking - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: charming_kapitsa - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: angry_knuth - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: recursing_roentgen - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: inspiring_torvalds - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: beautiful_pike - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: wizardly_lehmann - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: upbeat_yalow - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: interesting_chandrasekhar - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: infallible_jennings - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: hungry_allen - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: zealous_goldberg - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: elegant_cartwright - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: tender_sinoussi - 0.05%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: recursing_turing - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: cool_lovelace - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: happy_hertz - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: silly_bose - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: kind_dubinsky - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: awesome_curie - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: jovial_elgamal - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: epic_torvalds - 0.03%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: nostalgic_stonebraker - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: infallible_leakey - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: eloquent_hellman - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: goofy_driscoll - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: quizzical_brattain - 0.01%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: gifted_brahmagupta - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: peaceful_noyce - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: pedantic_nightingale - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: quirky_turing - 0.04%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: laughing_wilson - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: wonderful_jennings - 0.02%
+[2025-10-22T00:09:35Z DEBUG docker_monitor] Container update: brave_mclean - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: brave_mclean - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: competent_fermat - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: xenodochial_turing - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: nervous_johnson - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: zealous_cray - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: zen_roentgen - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: distracted_fermi - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: great_saha - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: priceless_jennings - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: cool_chatelet - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: competent_feynman - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: zealous_nightingale - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: exciting_leavitt - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: jovial_burnell - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: sad_yonath - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: epic_buck - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: vigorous_fermi - 0.08%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: gifted_visvesvaraya - 0.05%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: great_almeida - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: recursing_cori - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: clever_wozniak - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: adoring_haslett - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: affectionate_hawking - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: dreamy_hellman - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: elated_kepler - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: romantic_jemison - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: boring_kalam - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: boring_leavitt - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: beautiful_liskov - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: confident_varahamihira - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: competent_mcclintock - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: clever_noyce - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: elated_napier - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: stoic_sinoussi - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: unruffled_nobel - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: objective_swanson - 0.05%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: jovial_dirac - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: fervent_banzai - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: quirky_proskuriakova - 0.13%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: hungry_einstein - 0.06%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: heuristic_hawking - 0.07%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: jolly_noether - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: laughing_fermat - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: compassionate_moore - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: elastic_leakey - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: quirky_bartik - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: admiring_beaver - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: pensive_rubin - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: funny_bartik - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: interesting_dirac - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: amazing_goldstine - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: jovial_zhukovsky - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: funny_mcnulty - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: objective_joliot - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: nervous_burnell - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: flamboyant_meitner - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: epic_franklin - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: musing_cray - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: festive_keldysh - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: hardcore_rosalind - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: elastic_dewdney - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: reverent_pasteur - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: busy_pare - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: jovial_pare - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: cranky_volhard - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: musing_hypatia - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: hungry_williamson - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: flamboyant_hawking - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: charming_kapitsa - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: angry_knuth - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: recursing_roentgen - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: inspiring_torvalds - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: beautiful_pike - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: wizardly_lehmann - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: upbeat_yalow - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: interesting_chandrasekhar - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: infallible_jennings - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: hungry_allen - 0.04%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: zealous_goldberg - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: elegant_cartwright - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: tender_sinoussi - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: recursing_turing - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: cool_lovelace - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: happy_hertz - 0.06%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: silly_bose - 0.06%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: kind_dubinsky - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: awesome_curie - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: jovial_elgamal - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: epic_torvalds - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: nostalgic_stonebraker - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: infallible_leakey - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: eloquent_hellman - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: goofy_driscoll - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: quizzical_brattain - 0.07%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: gifted_brahmagupta - 0.03%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: peaceful_noyce - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: pedantic_nightingale - 0.01%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: quirky_turing - 0.02%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: laughing_wilson - 0.05%
+[2025-10-22T00:09:36Z DEBUG docker_monitor] Container update: wonderful_jennings - 0.02%
+[2025-10-22T00:09:37Z INFO  docker_monitor] Quit event received

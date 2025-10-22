@@ -24,6 +24,7 @@ struct ContainerInfo {
     id: String,
     name: String,
     cpu: f64,
+    memory: f64,
     status: String,
 }
 
@@ -64,10 +65,20 @@ async fn stream_container_stats(
                     0.0
                 };
 
+                // Calculate memory percentage
+                let memory_usage = stats.memory_stats.usage.unwrap_or(0) as f64;
+                let memory_limit = stats.memory_stats.limit.unwrap_or(1) as f64;
+                let memory_percent = if memory_limit > 0.0 {
+                    (memory_usage / memory_limit) * 100.0
+                } else {
+                    0.0
+                };
+
                 let info = ContainerInfo {
                     id: id[..12.min(id.len())].to_string(),
                     name: name.clone(),
                     cpu: cpu_percent,
+                    memory: memory_percent,
                     status: status.clone(),
                 };
 
@@ -112,6 +123,7 @@ async fn container_manager(docker: Docker, tx: mpsc::Sender<AppEvent>) {
                 id: id[..12.min(id.len())].to_string(),
                 name: name.clone(),
                 cpu: 0.0,
+                memory: 0.0,
                 status: status.clone(),
             };
 
@@ -182,6 +194,7 @@ async fn container_manager(docker: Docker, tx: mpsc::Sender<AppEvent>) {
                                         id: container_id[..12.min(container_id.len())].to_string(),
                                         name: name.clone(),
                                         cpu: 0.0,
+                                        memory: 0.0,
                                         status: status.clone(),
                                     };
 
@@ -330,16 +343,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             style_low
                         };
 
+                        let memory_style = if c.memory > 80.0 {
+                            style_high
+                        } else if c.memory > 50.0 {
+                            style_medium
+                        } else {
+                            style_low
+                        };
+
                         Row::new(vec![
                             Cell::from(c.id.as_str()),
                             Cell::from(c.name.as_str()),
                             Cell::from(format!("{:.2}%", c.cpu)).style(cpu_style),
+                            Cell::from(format!("{:.2}%", c.memory)).style(memory_style),
                             Cell::from(c.status.as_str()),
                         ])
                     })
                     .collect();
 
-                let header = Row::new(vec!["Container ID", "Name", "CPU %", "Status"])
+                let header = Row::new(vec!["Container ID", "Name", "CPU %", "Memory %", "Status"])
                     .style(
                         Style::default()
                             .fg(Color::Cyan)
@@ -352,6 +374,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     [
                         Constraint::Length(12),
                         Constraint::Min(20),
+                        Constraint::Length(12),
                         Constraint::Length(12),
                         Constraint::Length(15),
                     ],
