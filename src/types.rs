@@ -17,4 +17,3 @@ pub enum AppEvent {
 }
 
 pub type EventSender = mpsc::Sender<AppEvent>;
-pub type EventReceiver = mpsc::Receiver<AppEvent>;

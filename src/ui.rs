@@ -51,7 +51,7 @@ pub fn render_ui(f: &mut Frame, containers: &HashMap<String, ContainerInfo>, sty
 }
 
 /// Creates a table row for a single container
-fn create_container_row(container: &ContainerInfo, styles: &UiStyles) -> Row {
+fn create_container_row<'a>(container: &'a ContainerInfo, styles: &UiStyles) -> Row<'a> {
     let cpu_style = get_percentage_style(container.cpu, styles);
     let memory_style = get_percentage_style(container.memory, styles);
 
@@ -83,12 +83,12 @@ fn create_header_row(styles: &UiStyles) -> Row<'static> {
 }
 
 /// Creates the complete table widget
-fn create_table(
-    rows: Vec<Row>,
+fn create_table<'a>(
+    rows: Vec<Row<'a>>,
     header: Row<'static>,
     container_count: usize,
     styles: &UiStyles,
-) -> Table {
+) -> Table<'a> {
     Table::new(
         rows,
         [
