@@ -1,0 +1,163 @@
+name: PR Build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    name: Build PR Artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build for x86_64 Linux
+        run: cross build --release --target x86_64-unknown-linux-gnu
+
+      - name: Build for ARM64 Linux
+        run: cross build --release --target aarch64-unknown-linux-gnu
+
+      - name: Build for x86_64 macOS
+        run: cross build --release --target x86_64-apple-darwin
+
+      - name: Build for ARM64 macOS (Apple Silicon)
+        run: cross build --release --target aarch64-apple-darwin
+
+      - name: Package binaries
+        run: |
+          mkdir -p pr-builds
+
+          # Linux x86_64
+          cd target/x86_64-unknown-linux-gnu/release
+          tar czf docker-monitor-linux-x86_64.tar.gz docker-monitor
+          mv docker-monitor-linux-x86_64.tar.gz ${{ github.workspace }}/pr-builds/
+
+          # Linux ARM64
+          cd ${{ github.workspace }}/target/aarch64-unknown-linux-gnu/release
+          tar czf docker-monitor-linux-aarch64.tar.gz docker-monitor
+          mv docker-monitor-linux-aarch64.tar.gz ${{ github.workspace }}/pr-builds/
+
+          # macOS x86_64
+          cd ${{ github.workspace }}/target/x86_64-apple-darwin/release
+          tar czf docker-monitor-macos-x86_64.tar.gz docker-monitor
+          mv docker-monitor-macos-x86_64.tar.gz ${{ github.workspace }}/pr-builds/
+
+          # macOS ARM64
+          cd ${{ github.workspace }}/target/aarch64-apple-darwin/release
+          tar czf docker-monitor-macos-aarch64.tar.gz docker-monitor
+          mv docker-monitor-macos-aarch64.tar.gz ${{ github.workspace }}/pr-builds/
+
+      - name: Upload PR artifacts
+        uses: actions/upload-artifact@v4
+        id: artifact-upload
+        with:
+          name: docker-monitor-pr-${{ github.event.pull_request.number }}
+          path: pr-builds/*.tar.gz
+          retention-days: 30
+
+      - name: Comment on PR with download links
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const artifactName = 'docker-monitor-pr-${{ github.event.pull_request.number }}';
+            const runId = context.runId;
+            const repo = context.repo;
+
+            const comment = `## 🚀 PR Build Artifacts
+
+            Build completed successfully for PR #${{ github.event.pull_request.number }}
+
+            ### Download Binaries
+
+            You can download the pre-built binaries for all platforms from the artifacts:
+
+            [📦 Download All Platforms](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})
+
+            ### Available Builds
+            - ✅ Linux x86_64 (Intel/AMD)
+            - ✅ Linux ARM64
+            - ✅ macOS x86_64 (Intel)
+            - ✅ macOS ARM64 (Apple Silicon)
+
+            ### How to Download
+            1. Click the link above
+            2. Scroll to the "Artifacts" section at the bottom
+            3. Download \`${artifactName}\`
+            4. Extract the archive for your platform
+
+            ### Install Example (Linux x86_64)
+            \`\`\`bash
+            tar xzf docker-monitor-linux-x86_64.tar.gz
+            chmod +x docker-monitor
+            ./docker-monitor
+            \`\`\`
+
+            ---
+            *Artifacts will be available for 30 days*`;
+
+            // Find existing bot comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('PR Build Artifacts')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Comment on build failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = context.runId;
+            const repo = context.repo;
+
+            const comment = `## ❌ PR Build Failed
+
+            The build for PR #${{ github.event.pull_request.number }} has failed.
+
+            [View Build Logs](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})
+
+            Please check the logs and fix any build errors.`;
+
+            await github.rest.issues.createComment({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });

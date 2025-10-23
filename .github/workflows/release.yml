@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build for x86_64 Linux
+        run: cross build --release --target x86_64-unknown-linux-gnu
+
+      - name: Build for ARM64 Linux
+        run: cross build --release --target aarch64-unknown-linux-gnu
+
+      - name: Build for x86_64 macOS
+        run: cross build --release --target x86_64-apple-darwin
+
+      - name: Build for ARM64 macOS (Apple Silicon)
+        run: cross build --release --target aarch64-apple-darwin
+
+      - name: Package binaries
+        run: |
+          mkdir -p releases
+
+          # Linux x86_64
+          cd target/x86_64-unknown-linux-gnu/release
+          tar czf docker-monitor-linux-x86_64.tar.gz docker-monitor
+          mv docker-monitor-linux-x86_64.tar.gz ${{ github.workspace }}/releases/
+
+          # Linux ARM64
+          cd ${{ github.workspace }}/target/aarch64-unknown-linux-gnu/release
+          tar czf docker-monitor-linux-aarch64.tar.gz docker-monitor
+          mv docker-monitor-linux-aarch64.tar.gz ${{ github.workspace }}/releases/
+
+          # macOS x86_64
+          cd ${{ github.workspace }}/target/x86_64-apple-darwin/release
+          tar czf docker-monitor-macos-x86_64.tar.gz docker-monitor
+          mv docker-monitor-macos-x86_64.tar.gz ${{ github.workspace }}/releases/
+
+          # macOS ARM64
+          cd ${{ github.workspace }}/target/aarch64-apple-darwin/release
+          tar czf docker-monitor-macos-aarch64.tar.gz docker-monitor
+          mv docker-monitor-macos-aarch64.tar.gz ${{ github.workspace }}/releases/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-monitor-all-platforms
+          path: releases/*.tar.gz
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: releases/*.tar.gz
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
