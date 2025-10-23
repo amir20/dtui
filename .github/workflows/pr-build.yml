@@ -4,13 +4,33 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   build:
-    name: Build PR Artifacts
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+    name: Build - ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            name: linux-x86_64
+            use_cross: false
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            name: linux-aarch64
+            use_cross: true
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            name: macos-x86_64
+            use_cross: false
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            name: macos-aarch64
+            use_cross: false
 
     steps:
       - name: Checkout code
@@ -18,62 +38,52 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.target }}
 
       - name: Install cross
+        if: matrix.platform.use_cross
         run: cargo install cross --git https://github.com/cross-rs/cross
 
-      - name: Build for x86_64 Linux
-        run: cross build --release --target x86_64-unknown-linux-gnu
+      - name: Build with cargo
+        if: ${{ !matrix.platform.use_cross }}
+        run: cargo build --release --target ${{ matrix.platform.target }}
 
-      - name: Build for ARM64 Linux
-        run: cross build --release --target aarch64-unknown-linux-gnu
+      - name: Build with cross
+        if: matrix.platform.use_cross
+        run: cross build --release --target ${{ matrix.platform.target }}
 
-      - name: Build for x86_64 macOS
-        run: cross build --release --target x86_64-apple-darwin
-
-      - name: Build for ARM64 macOS (Apple Silicon)
-        run: cross build --release --target aarch64-apple-darwin
-
-      - name: Package binaries
+      - name: Package binary
         run: |
-          mkdir -p pr-builds
+          cd target/${{ matrix.platform.target }}/release
+          tar czf docker-monitor-${{ matrix.platform.name }}.tar.gz docker-monitor
+          mv docker-monitor-${{ matrix.platform.name }}.tar.gz ${{ github.workspace }}
 
-          # Linux x86_64
-          cd target/x86_64-unknown-linux-gnu/release
-          tar czf docker-monitor-linux-x86_64.tar.gz docker-monitor
-          mv docker-monitor-linux-x86_64.tar.gz ${{ github.workspace }}/pr-builds/
-
-          # Linux ARM64
-          cd ${{ github.workspace }}/target/aarch64-unknown-linux-gnu/release
-          tar czf docker-monitor-linux-aarch64.tar.gz docker-monitor
-          mv docker-monitor-linux-aarch64.tar.gz ${{ github.workspace }}/pr-builds/
-
-          # macOS x86_64
-          cd ${{ github.workspace }}/target/x86_64-apple-darwin/release
-          tar czf docker-monitor-macos-x86_64.tar.gz docker-monitor
-          mv docker-monitor-macos-x86_64.tar.gz ${{ github.workspace }}/pr-builds/
-
-          # macOS ARM64
-          cd ${{ github.workspace }}/target/aarch64-apple-darwin/release
-          tar czf docker-monitor-macos-aarch64.tar.gz docker-monitor
-          mv docker-monitor-macos-aarch64.tar.gz ${{ github.workspace }}/pr-builds/
-
-      - name: Upload PR artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
-        id: artifact-upload
         with:
-          name: docker-monitor-pr-${{ github.event.pull_request.number }}
-          path: pr-builds/*.tar.gz
+          name: docker-monitor-pr-${{ github.event.pull_request.number }}-${{ matrix.platform.name }}
+          path: docker-monitor-${{ matrix.platform.name }}.tar.gz
           retention-days: 30
+
+  comment:
+    name: Comment on PR
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
       - name: Comment on PR with download links
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            const path = require('path');
-
-            const artifactName = 'docker-monitor-pr-${{ github.event.pull_request.number }}';
             const runId = context.runId;
             const repo = context.repo;
 
@@ -85,7 +95,7 @@ jobs:
 
             You can download the pre-built binaries for all platforms from the artifacts:
 
-            [📦 Download All Platforms](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})
+            [📦 View All Artifacts](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})
 
             ### Available Builds
             - ✅ Linux x86_64 (Intel/AMD)
@@ -96,8 +106,8 @@ jobs:
             ### How to Download
             1. Click the link above
             2. Scroll to the "Artifacts" section at the bottom
-            3. Download \`${artifactName}\`
-            4. Extract the archive for your platform
+            3. Download the artifact for your platform
+            4. Extract the archive
 
             ### Install Example (Linux x86_64)
             \`\`\`bash
