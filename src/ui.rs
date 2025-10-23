@@ -93,9 +93,9 @@ fn create_table<'a>(
         rows,
         [
             Constraint::Length(12),
-            Constraint::Min(20),
-            Constraint::Length(12),
-            Constraint::Length(12),
+            Constraint::Max(30),
+            Constraint::Fill(1),
+            Constraint::Fill(1),
             Constraint::Length(15),
         ],
     )
