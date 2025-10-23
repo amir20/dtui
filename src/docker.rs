@@ -1,5 +1,7 @@
-use bollard::container::{ListContainersOptions, StatsOptions};
-use bollard::system::EventsOptions;
+use bollard::models::ContainerStatsResponse;
+use bollard::query_parameters::{
+    EventsOptions, InspectContainerOptions, ListContainersOptions, StatsOptions,
+};
 use bollard::Docker;
 use futures_util::stream::StreamExt;
 use std::collections::HashMap;
@@ -53,12 +55,31 @@ pub async fn stream_container_stats(
 }
 
 /// Calculates CPU usage percentage from container stats
-fn calculate_cpu_percentage(stats: &bollard::container::Stats) -> f64 {
-    let cpu_delta = stats.cpu_stats.cpu_usage.total_usage as f64
-        - stats.precpu_stats.cpu_usage.total_usage as f64;
-    let system_delta = stats.cpu_stats.system_cpu_usage.unwrap_or(0) as f64
-        - stats.precpu_stats.system_cpu_usage.unwrap_or(0) as f64;
-    let number_cpus = stats.cpu_stats.online_cpus.unwrap_or(1) as f64;
+fn calculate_cpu_percentage(stats: &ContainerStatsResponse) -> f64 {
+    let cpu_stats = match &stats.cpu_stats {
+        Some(cs) => cs,
+        None => return 0.0,
+    };
+    let precpu_stats = match &stats.precpu_stats {
+        Some(pcs) => pcs,
+        None => return 0.0,
+    };
+
+    let cpu_usage = cpu_stats
+        .cpu_usage
+        .as_ref()
+        .and_then(|u| u.total_usage)
+        .unwrap_or(0);
+    let precpu_usage = precpu_stats
+        .cpu_usage
+        .as_ref()
+        .and_then(|u| u.total_usage)
+        .unwrap_or(0);
+    let cpu_delta = cpu_usage as f64 - precpu_usage as f64;
+
+    let system_delta = cpu_stats.system_cpu_usage.unwrap_or(0) as f64
+        - precpu_stats.system_cpu_usage.unwrap_or(0) as f64;
+    let number_cpus = cpu_stats.online_cpus.unwrap_or(1) as f64;
 
     if system_delta > 0.0 && cpu_delta > 0.0 {
         (cpu_delta / system_delta) * number_cpus * 100.0
@@ -68,9 +89,14 @@ fn calculate_cpu_percentage(stats: &bollard::container::Stats) -> f64 {
 }
 
 /// Calculates memory usage percentage from container stats
-fn calculate_memory_percentage(stats: &bollard::container::Stats) -> f64 {
-    let memory_usage = stats.memory_stats.usage.unwrap_or(0) as f64;
-    let memory_limit = stats.memory_stats.limit.unwrap_or(1) as f64;
+fn calculate_memory_percentage(stats: &ContainerStatsResponse) -> f64 {
+    let memory_stats = match &stats.memory_stats {
+        Some(ms) => ms,
+        None => return 0.0,
+    };
+
+    let memory_usage = memory_stats.usage.unwrap_or(0) as f64;
+    let memory_limit = memory_stats.limit.unwrap_or(1) as f64;
 
     if memory_limit > 0.0 {
         (memory_usage / memory_limit) * 100.0
@@ -96,7 +122,7 @@ async fn fetch_initial_containers(
     tx: &EventSender,
     active_containers: &mut HashMap<String, tokio::task::JoinHandle<()>>,
 ) {
-    let list_options = Some(ListContainersOptions::<String> {
+    let list_options = Some(ListContainersOptions {
         all: false,
         ..Default::default()
     });
@@ -148,8 +174,8 @@ async fn monitor_docker_events(
         vec!["start".to_string(), "die".to_string(), "stop".to_string()],
     );
 
-    let events_options = EventsOptions::<String> {
-        filters,
+    let events_options = EventsOptions {
+        filters: Some(filters),
         ..Default::default()
     };
 
@@ -210,7 +236,10 @@ async fn handle_container_start(
     active_containers: &mut HashMap<String, tokio::task::JoinHandle<()>>,
 ) {
     // Get container details
-    if let Ok(inspect) = docker.inspect_container(container_id, None).await {
+    if let Ok(inspect) = docker
+        .inspect_container(container_id, None::<InspectContainerOptions>)
+        .await
+    {
         let name = inspect
             .name
             .as_ref()

@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ratatui = "0.28"
-crossterm = "0.28"
-bollard = "0.17"
+ratatui = "0.29"
+crossterm = "0.29"
 tokio = { version = "1", features = ["full"] }
 futures-util = "0.3"
+bollard = {version= "0.19.3", features = ["ssh"]}
 
 [profile.release]
 debug = true  # Enable debug symbols for profiling
