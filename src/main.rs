@@ -3,7 +3,8 @@ mod input;
 mod types;
 mod ui;
 
-use bollard::Docker;
+use bollard::{Docker, API_DEFAULT_VERSION};
+use clap::Parser;
 use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -19,10 +20,27 @@ use input::keyboard_worker;
 use types::{AppEvent, ContainerInfo};
 use ui::{render_ui, UiStyles};
 
+/// Docker container monitoring TUI
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Docker host to connect to
+    ///
+    /// Examples:
+    ///   --host local                    (Connect to local Docker daemon)
+    ///   --host ssh://user@host          (Connect via SSH)
+    ///   --host ssh://user@host:2222     (Connect via SSH with custom port)
+    #[arg(short = 'H', long, default_value = "local")]
+    host: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Connect to Docker
-    let docker = Docker::connect_with_local_defaults()?;
+    // Parse command line arguments
+    let args = Args::parse();
+
+    // Connect to Docker based on the host argument
+    let docker = connect_docker(&args.host)?;
 
     // Setup terminal
     let mut terminal = setup_terminal()?;
@@ -43,6 +61,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     cleanup_terminal(&mut terminal)?;
 
     Ok(())
+}
+
+/// Connects to Docker based on the host string
+fn connect_docker(host: &str) -> Result<Docker, Box<dyn std::error::Error>> {
+    if host == "local" {
+        // Connect to local Docker daemon using default settings
+        Ok(Docker::connect_with_local_defaults()?)
+    } else if host.starts_with("ssh://") {
+        // Connect via SSH with 120 second timeout
+        Ok(Docker::connect_with_ssh(
+            host,
+            120, // timeout in seconds
+            API_DEFAULT_VERSION,
+        )?)
+    } else {
+        Err(format!(
+            "Invalid host format: '{}'. Use 'local' or 'ssh://user@host[:port]'",
+            host
+        )
+        .into())
+    }
 }
 
 /// Sets up the terminal for TUI rendering

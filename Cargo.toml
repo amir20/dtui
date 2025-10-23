@@ -9,6 +9,7 @@ crossterm = "0.29"
 tokio = { version = "1", features = ["full"] }
 futures-util = "0.3"
 bollard = {version= "0.19.3", features = ["ssh"]}
+clap = { version = "4.5", features = ["derive"] }
 
 [profile.release]
 debug = true  # Enable debug symbols for profiling
