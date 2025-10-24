@@ -21,7 +21,10 @@ insta = "1.34"
 mockall = "0.13"
 
 [profile.release]
-debug = true  # Enable debug symbols for profiling
+strip = true           # Strip all symbols for smallest binary size
+lto = true            # Link-time optimization for better performance
+codegen-units = 1     # Single codegen unit for maximum optimization
+opt-level = "z"       # Optimize for size
 
 
 [package.metadata.release]
