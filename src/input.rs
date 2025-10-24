@@ -8,8 +8,8 @@ use crate::types::{AppEvent, EventSender};
 pub fn keyboard_worker(tx: EventSender) {
     loop {
         // Poll every 200ms - humans won't notice the difference
-        if event::poll(Duration::from_millis(200)).unwrap_or(false) {
-            if let Ok(event) = event::read() {
+        if event::poll(Duration::from_millis(200)).unwrap_or(false)
+            && let Ok(event) = event::read() {
                 match event {
                     Event::Key(key) => {
                         if key.code == KeyCode::Char('q') {
@@ -23,6 +23,5 @@ pub fn keyboard_worker(tx: EventSender) {
                     _ => {}
                 }
             }
-        }
     }
 }
