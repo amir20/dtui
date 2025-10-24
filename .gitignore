@@ -20,3 +20,4 @@ profile.json.gz
 # Backup files
 *.bak
 *.tmp
+*.log
