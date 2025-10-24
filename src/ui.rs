@@ -1,8 +1,8 @@
 use ratatui::{
+    Frame,
     layout::Constraint,
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Cell, Row, Table},
-    Frame,
 };
 use std::collections::HashMap;
 
@@ -115,7 +115,7 @@ fn create_table<'a>(
 mod tests {
     use super::*;
     use crate::types::ContainerStats;
-    use ratatui::{backend::TestBackend, Terminal};
+    use ratatui::{Terminal, backend::TestBackend};
 
     fn create_test_container(id: &str, name: &str, cpu: f64, memory: f64) -> Container {
         Container {

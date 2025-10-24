@@ -3,13 +3,13 @@ mod input;
 mod types;
 mod ui;
 
-use bollard::{Docker, API_DEFAULT_VERSION};
+use bollard::{API_DEFAULT_VERSION, Docker};
 use clap::Parser;
 use crossterm::{
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use ratatui::{backend::CrosstermBackend, Terminal};
+use ratatui::{Terminal, backend::CrosstermBackend};
 use std::collections::HashMap;
 use std::io;
 use std::time::Duration;
@@ -18,7 +18,7 @@ use tokio::sync::mpsc;
 use docker::container_manager;
 use input::keyboard_worker;
 use types::{AppEvent, Container};
-use ui::{render_ui, UiStyles};
+use ui::{UiStyles, render_ui};
 
 /// Docker container monitoring TUI
 #[derive(Parser, Debug)]
