@@ -1,8 +1,8 @@
+use bollard::Docker;
 use bollard::models::ContainerStatsResponse;
 use bollard::query_parameters::{
     EventsOptions, InspectContainerOptions, ListContainersOptions, StatsOptions,
 };
-use bollard::Docker;
 use futures_util::stream::StreamExt;
 use std::collections::HashMap;
 use std::time::Duration;
