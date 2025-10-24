@@ -1,0 +1,34 @@
+---
+source: src/ui.rs
+expression: "format!(\"{:?}\", buffer)"
+---
+Buffer {
+    area: Rect { x: 0, y: 0, width: 80, height: 20 },
+    content: [
+        "┌Docker Container CPU Monitor - 0 containers (Press 'q' to quit)───────────────┐",
+        "│Container ID Name                           CPU %     Memory % Status         │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "│                                                                              │",
+        "└──────────────────────────────────────────────────────────────────────────────┘",
+    ],
+    styles: [
+        x: 0, y: 0, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 1, y: 1, fg: Cyan, bg: Reset, underline: Reset, modifier: BOLD,
+        x: 79, y: 1, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+    ]
+}

@@ -275,15 +275,15 @@ async fn handle_container_stop(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bollard::models::{CpuStats, CpuUsage, MemoryStats};
+    use bollard::models::{ContainerCpuStats, ContainerCpuUsage, ContainerMemoryStats};
 
     fn create_cpu_stats(
         total_usage: u64,
         system_cpu_usage: u64,
-        online_cpus: u64,
-    ) -> CpuStats {
-        CpuStats {
-            cpu_usage: Some(CpuUsage {
+        online_cpus: u32,
+    ) -> ContainerCpuStats {
+        ContainerCpuStats {
+            cpu_usage: Some(ContainerCpuUsage {
                 total_usage: Some(total_usage),
                 percpu_usage: None,
                 usage_in_kernelmode: None,
@@ -376,14 +376,12 @@ mod tests {
     #[test]
     fn test_calculate_memory_percentage_normal_usage() {
         let stats = ContainerStatsResponse {
-            memory_stats: Some(MemoryStats {
-                usage: Some(500_000_000), // 500 MB
+            memory_stats: Some(ContainerMemoryStats {
+                usage: Some(500_000_000),   // 500 MB
                 limit: Some(1_000_000_000), // 1 GB
                 max_usage: None,
                 stats: None,
                 failcnt: None,
-                commit: None,
-                commit_peak: None,
                 commitbytes: None,
                 commitpeakbytes: None,
                 privateworkingset: None,
@@ -397,14 +395,12 @@ mod tests {
     #[test]
     fn test_calculate_memory_percentage_full_usage() {
         let stats = ContainerStatsResponse {
-            memory_stats: Some(MemoryStats {
+            memory_stats: Some(ContainerMemoryStats {
                 usage: Some(1_000_000_000),
                 limit: Some(1_000_000_000),
                 max_usage: None,
                 stats: None,
                 failcnt: None,
-                commit: None,
-                commit_peak: None,
                 commitbytes: None,
                 commitpeakbytes: None,
                 privateworkingset: None,
@@ -418,14 +414,12 @@ mod tests {
     #[test]
     fn test_calculate_memory_percentage_low_usage() {
         let stats = ContainerStatsResponse {
-            memory_stats: Some(MemoryStats {
-                usage: Some(100_000_000), // 100 MB
+            memory_stats: Some(ContainerMemoryStats {
+                usage: Some(100_000_000),   // 100 MB
                 limit: Some(2_000_000_000), // 2 GB
                 max_usage: None,
                 stats: None,
                 failcnt: None,
-                commit: None,
-                commit_peak: None,
                 commitbytes: None,
                 commitpeakbytes: None,
                 privateworkingset: None,
@@ -449,14 +443,12 @@ mod tests {
     #[test]
     fn test_calculate_memory_percentage_missing_usage() {
         let stats = ContainerStatsResponse {
-            memory_stats: Some(MemoryStats {
+            memory_stats: Some(ContainerMemoryStats {
                 usage: None,
                 limit: Some(1_000_000_000),
                 max_usage: None,
                 stats: None,
                 failcnt: None,
-                commit: None,
-                commit_peak: None,
                 commitbytes: None,
                 commitpeakbytes: None,
                 privateworkingset: None,
@@ -470,14 +462,12 @@ mod tests {
     #[test]
     fn test_calculate_memory_percentage_zero_limit() {
         let stats = ContainerStatsResponse {
-            memory_stats: Some(MemoryStats {
+            memory_stats: Some(ContainerMemoryStats {
                 usage: Some(500_000_000),
                 limit: Some(0),
                 max_usage: None,
                 stats: None,
                 failcnt: None,
-                commit: None,
-                commit_peak: None,
                 commitbytes: None,
                 commitpeakbytes: None,
                 privateworkingset: None,
