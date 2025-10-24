@@ -1,0 +1,43 @@
+---
+source: src/ui.rs
+expression: "format!(\"{:?}\", buffer)"
+---
+Buffer {
+    area: Rect { x: 0, y: 0, width: 100, height: 25 },
+    content: [
+        "┌Docker Container CPU Monitor - 1 containers (Press 'q' to quit)───────────────────────────────────┐",
+        "│Container ID Name                           CPU %               Memory %           Status         │",
+        "│                                                                                                  │",
+        "│abc123def456 nginx                          25.50%              30.20%             running        │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "│                                                                                                  │",
+        "└──────────────────────────────────────────────────────────────────────────────────────────────────┘",
+    ],
+    styles: [
+        x: 0, y: 0, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 1, y: 1, fg: Cyan, bg: Reset, underline: Reset, modifier: BOLD,
+        x: 99, y: 1, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 45, y: 3, fg: Green, bg: Reset, underline: Reset, modifier: NONE,
+        x: 64, y: 3, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 65, y: 3, fg: Green, bg: Reset, underline: Reset, modifier: NONE,
+        x: 83, y: 3, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+    ]
+}
