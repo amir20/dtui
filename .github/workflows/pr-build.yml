@@ -60,7 +60,7 @@ jobs:
           mv docker-monitor-${{ matrix.platform.name }}.tar.gz ${{ github.workspace }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: docker-monitor-pr-${{ github.event.pull_request.number }}-${{ matrix.platform.name }}
           path: docker-monitor-${{ matrix.platform.name }}.tar.gz
@@ -76,7 +76,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           path: artifacts
 
