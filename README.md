@@ -1,6 +1,10 @@
 # Docker Monitor
 
-A terminal-based Docker container monitoring tool built with Rust. Monitor CPU and memory usage of your Docker containers in real-time with a beautiful TUI interface.
+A terminal-based Docker container monitoring tool built with Rust. This is a complete rewrite of [amir20/dtop](https://github.com/amir20/dtop) in Rust.
+
+**Status**: Currently in active development. The project is working toward feature parity with the original dtop. Some features may be incomplete or missing.
+
+Monitor CPU and memory usage of your Docker containers in real-time with a beautiful TUI interface.
 
 ## Features
 
