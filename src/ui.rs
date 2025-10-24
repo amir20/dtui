@@ -6,7 +6,7 @@ use ratatui::{
 };
 use std::collections::HashMap;
 
-use crate::types::ContainerInfo;
+use crate::types::Container;
 
 /// Pre-allocated styles to avoid recreation every frame
 pub struct UiStyles {
@@ -32,7 +32,7 @@ impl Default for UiStyles {
 }
 
 /// Renders the main UI table showing container stats
-pub fn render_ui(f: &mut Frame, containers: &HashMap<String, ContainerInfo>, styles: &UiStyles) {
+pub fn render_ui(f: &mut Frame, containers: &HashMap<String, Container>, styles: &UiStyles) {
     let size = f.area();
 
     // Collect references instead of cloning
@@ -51,15 +51,15 @@ pub fn render_ui(f: &mut Frame, containers: &HashMap<String, ContainerInfo>, sty
 }
 
 /// Creates a table row for a single container
-fn create_container_row<'a>(container: &'a ContainerInfo, styles: &UiStyles) -> Row<'a> {
-    let cpu_style = get_percentage_style(container.cpu, styles);
-    let memory_style = get_percentage_style(container.memory, styles);
+fn create_container_row<'a>(container: &'a Container, styles: &UiStyles) -> Row<'a> {
+    let cpu_style = get_percentage_style(container.stats.cpu, styles);
+    let memory_style = get_percentage_style(container.stats.memory, styles);
 
     Row::new(vec![
         Cell::from(container.id.as_str()),
         Cell::from(container.name.as_str()),
-        Cell::from(format!("{:.2}%", container.cpu)).style(cpu_style),
-        Cell::from(format!("{:.2}%", container.memory)).style(memory_style),
+        Cell::from(format!("{:.2}%", container.stats.cpu)).style(cpu_style),
+        Cell::from(format!("{:.2}%", container.stats.memory)).style(memory_style),
         Cell::from(container.status.as_str()),
     ])
 }

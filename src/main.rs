@@ -17,7 +17,7 @@ use tokio::sync::mpsc;
 
 use docker::container_manager;
 use input::keyboard_worker;
-use types::{AppEvent, ContainerInfo};
+use types::{AppEvent, Container};
 use ui::{render_ui, UiStyles};
 
 /// Docker container monitoring TUI
@@ -122,7 +122,7 @@ async fn run_event_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     rx: &mut mpsc::Receiver<AppEvent>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut containers: HashMap<String, ContainerInfo> = HashMap::new();
+    let mut containers: HashMap<String, Container> = HashMap::new();
     let mut should_quit = false;
     let mut last_draw = tokio::time::Instant::now();
     let draw_interval = Duration::from_millis(500); // Refresh UI every 500ms
@@ -155,24 +155,31 @@ async fn run_event_loop(
 /// Processes all pending events from the event channel
 fn process_events(
     rx: &mut mpsc::Receiver<AppEvent>,
-    containers: &mut HashMap<String, ContainerInfo>,
+    containers: &mut HashMap<String, Container>,
     should_quit: &mut bool,
 ) -> bool {
     let mut events_processed = false;
 
     loop {
         match rx.try_recv() {
-            Ok(AppEvent::ContainerUpdate(id, info)) => {
-                containers.insert(id, info);
+            Ok(AppEvent::InitialContainerList(container_list)) => {
+                for container in container_list {
+                    containers.insert(container.id.clone(), container);
+                }
                 events_processed = true;
             }
-            Ok(AppEvent::ContainerRemoved(id)) => {
+            Ok(AppEvent::ContainerCreated(container)) => {
+                containers.insert(container.id.clone(), container);
+                events_processed = true;
+            }
+            Ok(AppEvent::ContainerDestroyed(id)) => {
                 containers.remove(&id);
                 events_processed = true;
             }
-            Ok(AppEvent::InitialContainerList(container_list)) => {
-                for (id, info) in container_list {
-                    containers.insert(id, info);
+            Ok(AppEvent::ContainerStat(id, stats)) => {
+                // Update stats on existing container
+                if let Some(container) = containers.get_mut(&id) {
+                    container.stats = stats;
                 }
                 events_processed = true;
             }

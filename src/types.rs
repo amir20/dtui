@@ -1,18 +1,31 @@
 use tokio::sync::mpsc;
 
+/// Container metadata (static information)
 #[derive(Clone, Debug)]
-pub struct ContainerInfo {
+pub struct Container {
     pub id: String,
     pub name: String,
+    pub status: String,
+    pub stats: ContainerStats,
+}
+
+/// Container runtime statistics (updated frequently)
+#[derive(Clone, Debug, Default)]
+pub struct ContainerStats {
     pub cpu: f64,
     pub memory: f64,
-    pub status: String,
 }
 
 pub enum AppEvent {
-    ContainerUpdate(String, ContainerInfo),
-    ContainerRemoved(String),
-    InitialContainerList(Vec<(String, ContainerInfo)>),
+    /// Initial list of containers when app starts
+    InitialContainerList(Vec<Container>),
+    /// A new container was created/started
+    ContainerCreated(Container),
+    /// A container was stopped/destroyed
+    ContainerDestroyed(String),
+    /// Stats update for an existing container
+    ContainerStat(String, ContainerStats),
+    /// User requested to quit
     Quit,
 }
 
