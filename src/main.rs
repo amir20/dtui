@@ -124,73 +124,83 @@ async fn run_event_loop(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut containers: HashMap<String, Container> = HashMap::new();
     let mut should_quit = false;
-    let mut last_draw = tokio::time::Instant::now();
     let draw_interval = Duration::from_millis(500); // Refresh UI every 500ms
 
     // Pre-allocate styles to avoid recreation every frame
     let styles = UiStyles::default();
 
     while !should_quit {
-        // Process all pending events without blocking
-        let events_processed = process_events(rx, &mut containers, &mut should_quit);
+        // Wait for events with timeout - handles both throttling and waiting
+        process_events(rx, &mut containers, &mut should_quit, draw_interval).await;
 
-        // Only draw if enough time has passed or if we need to quit
-        let now = tokio::time::Instant::now();
-        if should_quit || now.duration_since(last_draw) >= draw_interval {
-            terminal.draw(|f| {
-                render_ui(f, &containers, &styles);
-            })?;
-            last_draw = now;
-        }
-
-        // If no events were processed, wait a bit to avoid busy-looping
-        if !events_processed {
-            tokio::time::sleep(Duration::from_millis(500)).await;
-        }
+        // Draw UI after processing events
+        terminal.draw(|f| {
+            render_ui(f, &containers, &styles);
+        })?;
     }
 
     Ok(())
 }
 
 /// Processes all pending events from the event channel
-fn process_events(
+/// Waits with timeout for at least one event, then drains all pending events
+async fn process_events(
     rx: &mut mpsc::Receiver<AppEvent>,
     containers: &mut HashMap<String, Container>,
     should_quit: &mut bool,
-) -> bool {
-    let mut events_processed = false;
-
-    loop {
-        match rx.try_recv() {
-            Ok(AppEvent::InitialContainerList(container_list)) => {
-                for container in container_list {
-                    containers.insert(container.id.clone(), container);
-                }
-                events_processed = true;
-            }
-            Ok(AppEvent::ContainerCreated(container)) => {
-                containers.insert(container.id.clone(), container);
-                events_processed = true;
-            }
-            Ok(AppEvent::ContainerDestroyed(id)) => {
-                containers.remove(&id);
-                events_processed = true;
-            }
-            Ok(AppEvent::ContainerStat(id, stats)) => {
-                // Update stats on existing container
-                if let Some(container) = containers.get_mut(&id) {
-                    container.stats = stats;
-                }
-                events_processed = true;
-            }
-            Ok(AppEvent::Quit) => {
-                *should_quit = true;
-                events_processed = true;
-                break;
-            }
-            Err(_) => break, // No more events available
+    timeout: Duration,
+) {
+    // Wait for first event with timeout
+    match tokio::time::timeout(timeout, rx.recv()).await {
+        Ok(Some(event)) => {
+            process_single_event(event, containers, should_quit);
+        }
+        Ok(None) => {
+            // Channel closed
+            *should_quit = true;
+            return;
+        }
+        Err(_) => {
+            // Timeout - no events, just return to redraw
+            return;
         }
     }
 
-    events_processed
+    // Drain any additional pending events without blocking
+    while let Ok(event) = rx.try_recv() {
+        process_single_event(event, containers, should_quit);
+    }
+}
+
+/// Processes a single event
+fn process_single_event(
+    event: AppEvent,
+    containers: &mut HashMap<String, Container>,
+    should_quit: &mut bool,
+) {
+    match event {
+        AppEvent::InitialContainerList(container_list) => {
+            for container in container_list {
+                containers.insert(container.id.clone(), container);
+            }
+        }
+        AppEvent::ContainerCreated(container) => {
+            containers.insert(container.id.clone(), container);
+        }
+        AppEvent::ContainerDestroyed(id) => {
+            containers.remove(&id);
+        }
+        AppEvent::ContainerStat(id, stats) => {
+            // Update stats on existing container
+            if let Some(container) = containers.get_mut(&id) {
+                container.stats = stats;
+            }
+        }
+        AppEvent::Resize => {
+            // Just process the event - UI will redraw immediately after
+        }
+        AppEvent::Quit => {
+            *should_quit = true;
+        }
+    }
 }

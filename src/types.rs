@@ -27,6 +27,8 @@ pub enum AppEvent {
     ContainerStat(String, ContainerStats),
     /// User requested to quit
     Quit,
+    /// Terminal was resized
+    Resize,
 }
 
 pub type EventSender = mpsc::Sender<AppEvent>;
