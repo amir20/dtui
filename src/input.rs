@@ -9,19 +9,20 @@ pub fn keyboard_worker(tx: EventSender) {
     loop {
         // Poll every 200ms - humans won't notice the difference
         if event::poll(Duration::from_millis(200)).unwrap_or(false)
-            && let Ok(event) = event::read() {
-                match event {
-                    Event::Key(key) => {
-                        if key.code == KeyCode::Char('q') {
-                            let _ = tx.blocking_send(AppEvent::Quit);
-                            break;
-                        }
+            && let Ok(event) = event::read()
+        {
+            match event {
+                Event::Key(key) => {
+                    if key.code == KeyCode::Char('q') {
+                        let _ = tx.blocking_send(AppEvent::Quit);
+                        break;
                     }
-                    Event::Resize(_, _) => {
-                        let _ = tx.blocking_send(AppEvent::Resize);
-                    }
-                    _ => {}
                 }
+                Event::Resize(_, _) => {
+                    let _ = tx.blocking_send(AppEvent::Resize);
+                }
+                _ => {}
             }
+        }
     }
 }
