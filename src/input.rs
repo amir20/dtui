@@ -12,12 +12,19 @@ pub fn keyboard_worker(tx: EventSender) {
             && let Ok(event) = event::read()
         {
             match event {
-                Event::Key(key) => {
-                    if key.code == KeyCode::Char('q') {
+                Event::Key(key) => match key.code {
+                    KeyCode::Char('q') => {
                         let _ = tx.blocking_send(AppEvent::Quit);
                         break;
                     }
-                }
+                    KeyCode::Up => {
+                        let _ = tx.blocking_send(AppEvent::SelectPrevious);
+                    }
+                    KeyCode::Down => {
+                        let _ = tx.blocking_send(AppEvent::SelectNext);
+                    }
+                    _ => {}
+                },
                 Event::Resize(_, _) => {
                     let _ = tx.blocking_send(AppEvent::Resize);
                 }

@@ -2,7 +2,7 @@ use ratatui::{
     Frame,
     layout::Constraint,
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Cell, Row, Table},
+    widgets::{Block, Borders, Cell, Row, Table, TableState},
 };
 use std::collections::HashMap;
 
@@ -15,6 +15,7 @@ pub struct UiStyles {
     pub low: Style,
     pub header: Style,
     pub border: Style,
+    pub selected: Style,
 }
 
 impl Default for UiStyles {
@@ -27,12 +28,20 @@ impl Default for UiStyles {
                 .fg(Color::Cyan)
                 .add_modifier(Modifier::BOLD),
             border: Style::default().fg(Color::White),
+            selected: Style::default()
+                .bg(Color::DarkGray)
+                .add_modifier(Modifier::BOLD),
         }
     }
 }
 
 /// Renders the main UI table showing container stats
-pub fn render_ui(f: &mut Frame, containers: &HashMap<String, Container>, styles: &UiStyles) {
+pub fn render_ui(
+    f: &mut Frame,
+    containers: &HashMap<String, Container>,
+    styles: &UiStyles,
+    table_state: &mut TableState,
+) {
     let size = f.area();
 
     // Collect references instead of cloning
@@ -47,7 +56,7 @@ pub fn render_ui(f: &mut Frame, containers: &HashMap<String, Container>, styles:
     let header = create_header_row(styles);
     let table = create_table(rows, header, containers.len(), styles);
 
-    f.render_widget(table, size);
+    f.render_stateful_widget(table, size, table_state);
 }
 
 /// Creates a table row for a single container
@@ -104,11 +113,12 @@ fn create_table<'a>(
         Block::default()
             .borders(Borders::ALL)
             .title(format!(
-                "Docker Container CPU Monitor - {} containers (Press 'q' to quit)",
+                "Docker Container CPU Monitor - {} containers (↑/↓ to navigate, 'q' to quit)",
                 container_count
             ))
             .style(styles.border),
     )
+    .row_highlight_style(styles.selected)
 }
 
 #[cfg(test)]
@@ -156,10 +166,11 @@ mod tests {
 
         let containers = HashMap::new();
         let styles = UiStyles::default();
+        let mut table_state = TableState::default();
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &styles);
+                render_ui(f, &containers, &styles, &mut table_state);
             })
             .unwrap();
 
@@ -182,10 +193,11 @@ mod tests {
         );
 
         let styles = UiStyles::default();
+        let mut table_state = TableState::default();
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &styles);
+                render_ui(f, &containers, &styles, &mut table_state);
             })
             .unwrap();
 
@@ -209,10 +221,11 @@ mod tests {
         );
 
         let styles = UiStyles::default();
+        let mut table_state = TableState::default();
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &styles);
+                render_ui(f, &containers, &styles, &mut table_state);
             })
             .unwrap();
 
@@ -258,10 +271,11 @@ mod tests {
         );
 
         let styles = UiStyles::default();
+        let mut table_state = TableState::default();
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &styles);
+                render_ui(f, &containers, &styles, &mut table_state);
             })
             .unwrap();
 
@@ -291,9 +305,10 @@ mod tests {
 
         let containers = HashMap::new();
         let styles = UiStyles::default();
+        let mut table_state = TableState::default();
 
         terminal
-            .draw(|f| render_ui(f, &containers, &styles))
+            .draw(|f| render_ui(f, &containers, &styles, &mut table_state))
             .unwrap();
 
         let buffer = terminal.backend().buffer();
@@ -312,8 +327,9 @@ mod tests {
         );
 
         let styles = UiStyles::default();
+        let mut table_state = TableState::default();
         terminal
-            .draw(|f| render_ui(f, &containers, &styles))
+            .draw(|f| render_ui(f, &containers, &styles, &mut table_state))
             .unwrap();
 
         let buffer = terminal.backend().buffer();
@@ -340,8 +356,9 @@ mod tests {
         );
 
         let styles = UiStyles::default();
+        let mut table_state = TableState::default();
         terminal
-            .draw(|f| render_ui(f, &containers, &styles))
+            .draw(|f| render_ui(f, &containers, &styles, &mut table_state))
             .unwrap();
 
         let buffer = terminal.backend().buffer();
