@@ -212,9 +212,10 @@ fn process_single_event(
             if container_count == 0 {
                 table_state.select(None);
             } else if let Some(selected) = table_state.selected()
-                && selected >= container_count {
-                    table_state.select(Some(container_count - 1));
-                }
+                && selected >= container_count
+            {
+                table_state.select(Some(container_count - 1));
+            }
         }
         AppEvent::ContainerStat(id, stats) => {
             // Update stats on existing container
