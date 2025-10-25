@@ -9,7 +9,7 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use ratatui::{Terminal, backend::CrosstermBackend};
+use ratatui::{Terminal, backend::CrosstermBackend, widgets::TableState};
 use std::collections::HashMap;
 use std::io;
 use std::time::Duration;
@@ -124,6 +124,7 @@ async fn run_event_loop(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut containers: HashMap<String, Container> = HashMap::new();
     let mut should_quit = false;
+    let mut table_state = TableState::default();
     let draw_interval = Duration::from_millis(500); // Refresh UI every 500ms
 
     // Pre-allocate styles to avoid recreation every frame
@@ -131,11 +132,18 @@ async fn run_event_loop(
 
     while !should_quit {
         // Wait for events with timeout - handles both throttling and waiting
-        process_events(rx, &mut containers, &mut should_quit, draw_interval).await;
+        process_events(
+            rx,
+            &mut containers,
+            &mut should_quit,
+            &mut table_state,
+            draw_interval,
+        )
+        .await;
 
         // Draw UI after processing events
         terminal.draw(|f| {
-            render_ui(f, &containers, &styles);
+            render_ui(f, &containers, &styles, &mut table_state);
         })?;
     }
 
@@ -148,12 +156,13 @@ async fn process_events(
     rx: &mut mpsc::Receiver<AppEvent>,
     containers: &mut HashMap<String, Container>,
     should_quit: &mut bool,
+    table_state: &mut TableState,
     timeout: Duration,
 ) {
     // Wait for first event with timeout
     match tokio::time::timeout(timeout, rx.recv()).await {
         Ok(Some(event)) => {
-            process_single_event(event, containers, should_quit);
+            process_single_event(event, containers, should_quit, table_state);
         }
         Ok(None) => {
             // Channel closed
@@ -168,7 +177,7 @@ async fn process_events(
 
     // Drain any additional pending events without blocking
     while let Ok(event) = rx.try_recv() {
-        process_single_event(event, containers, should_quit);
+        process_single_event(event, containers, should_quit, table_state);
     }
 }
 
@@ -177,18 +186,35 @@ fn process_single_event(
     event: AppEvent,
     containers: &mut HashMap<String, Container>,
     should_quit: &mut bool,
+    table_state: &mut TableState,
 ) {
     match event {
         AppEvent::InitialContainerList(container_list) => {
             for container in container_list {
                 containers.insert(container.id.clone(), container);
             }
+            // Select first row if we have containers
+            if !containers.is_empty() {
+                table_state.select(Some(0));
+            }
         }
         AppEvent::ContainerCreated(container) => {
             containers.insert(container.id.clone(), container);
+            // Select first row if this is the first container
+            if containers.len() == 1 {
+                table_state.select(Some(0));
+            }
         }
         AppEvent::ContainerDestroyed(id) => {
             containers.remove(&id);
+            // Adjust selection if needed
+            let container_count = containers.len();
+            if container_count == 0 {
+                table_state.select(None);
+            } else if let Some(selected) = table_state.selected()
+                && selected >= container_count {
+                    table_state.select(Some(container_count - 1));
+                }
         }
         AppEvent::ContainerStat(id, stats) => {
             // Update stats on existing container
@@ -201,6 +227,24 @@ fn process_single_event(
         }
         AppEvent::Quit => {
             *should_quit = true;
+        }
+        AppEvent::SelectPrevious => {
+            let container_count = containers.len();
+            if container_count > 0 {
+                let selected = table_state.selected().unwrap_or(0);
+                if selected > 0 {
+                    table_state.select(Some(selected - 1));
+                }
+            }
+        }
+        AppEvent::SelectNext => {
+            let container_count = containers.len();
+            if container_count > 0 {
+                let selected = table_state.selected().unwrap_or(0);
+                if selected < container_count - 1 {
+                    table_state.select(Some(selected + 1));
+                }
+            }
         }
     }
 }

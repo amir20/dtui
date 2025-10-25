@@ -5,7 +5,7 @@ expression: "format!(\"{:?}\", buffer)"
 Buffer {
     area: Rect { x: 0, y: 0, width: 120, height: 30 },
     content: [
-        "┌Docker Container CPU Monitor - 3 containers (Press 'q' to quit)───────────────────────────────────────────────────────┐",
+        "┌Docker Container CPU Monitor - 3 containers (↑/↓ to navigate, 'q' to quit)────────────────────────────────────────────┐",
         "│Container ID Name                           CPU %                         Memory %                     Status         │",
         "│                                                                                                                      │",
         "│container1   nginx                          15.50%                        25.00%                       running        │",

@@ -29,6 +29,10 @@ pub enum AppEvent {
     Quit,
     /// Terminal was resized
     Resize,
+    /// Move selection up
+    SelectPrevious,
+    /// Move selection down
+    SelectNext,
 }
 
 pub type EventSender = mpsc::Sender<AppEvent>;
