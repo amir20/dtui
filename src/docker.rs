@@ -18,6 +18,9 @@ pub async fn stream_container_stats(docker: Docker, id: String, tx: EventSender)
 
     let mut stats_stream = docker.stats(&id, Some(stats_options));
 
+    // Truncate ID to match how it's stored in the HashMap (12 chars)
+    let truncated_id = id[..12.min(id.len())].to_string();
+
     while let Some(result) = stats_stream.next().await {
         match result {
             Ok(stats) => {
@@ -30,7 +33,7 @@ pub async fn stream_container_stats(docker: Docker, id: String, tx: EventSender)
                 };
 
                 if tx
-                    .send(AppEvent::ContainerStat(id.clone(), stats))
+                    .send(AppEvent::ContainerStat(truncated_id.clone(), stats))
                     .await
                     .is_err()
                 {
@@ -42,7 +45,7 @@ pub async fn stream_container_stats(docker: Docker, id: String, tx: EventSender)
     }
 
     // Notify that this container stream ended
-    let _ = tx.send(AppEvent::ContainerDestroyed(id)).await;
+    let _ = tx.send(AppEvent::ContainerDestroyed(truncated_id)).await;
 }
 
 /// Calculates CPU usage percentage from container stats
