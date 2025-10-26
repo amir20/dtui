@@ -1,0 +1,7 @@
+[
+  {
+    "label": "Format and Fix",
+    "command": "cargo clippy --fix --allow-dirty --allow-staged && cargo fmt",
+    "tags": ["rust"]
+  }
+]

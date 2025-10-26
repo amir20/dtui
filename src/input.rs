@@ -13,6 +13,12 @@ pub fn keyboard_worker(tx: EventSender) {
         {
             match event {
                 Event::Key(key) => match key.code {
+                    KeyCode::Char('q') | KeyCode::Char('c')
+                        if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                    {
+                        let _ = tx.blocking_send(AppEvent::Quit);
+                        break;
+                    }
                     KeyCode::Char('q') => {
                         let _ = tx.blocking_send(AppEvent::Quit);
                         break;
