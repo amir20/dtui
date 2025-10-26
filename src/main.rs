@@ -123,6 +123,7 @@ async fn run_event_loop(
     rx: &mut mpsc::Receiver<AppEvent>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut containers: HashMap<String, Container> = HashMap::new();
+    let mut sorted_container_ids: Vec<String> = Vec::new(); // Pre-sorted list of container IDs
     let mut should_quit = false;
     let mut table_state = TableState::default();
     let draw_interval = Duration::from_millis(500); // Refresh UI every 500ms
@@ -135,6 +136,7 @@ async fn run_event_loop(
         process_events(
             rx,
             &mut containers,
+            &mut sorted_container_ids,
             &mut should_quit,
             &mut table_state,
             draw_interval,
@@ -143,7 +145,13 @@ async fn run_event_loop(
 
         // Draw UI after processing events
         terminal.draw(|f| {
-            render_ui(f, &containers, &styles, &mut table_state);
+            render_ui(
+                f,
+                &containers,
+                &sorted_container_ids,
+                &styles,
+                &mut table_state,
+            );
         })?;
     }
 
@@ -155,6 +163,7 @@ async fn run_event_loop(
 async fn process_events(
     rx: &mut mpsc::Receiver<AppEvent>,
     containers: &mut HashMap<String, Container>,
+    sorted_container_ids: &mut Vec<String>,
     should_quit: &mut bool,
     table_state: &mut TableState,
     timeout: Duration,
@@ -162,7 +171,13 @@ async fn process_events(
     // Wait for first event with timeout
     match tokio::time::timeout(timeout, rx.recv()).await {
         Ok(Some(event)) => {
-            process_single_event(event, containers, should_quit, table_state);
+            process_single_event(
+                event,
+                containers,
+                sorted_container_ids,
+                should_quit,
+                table_state,
+            );
         }
         Ok(None) => {
             // Channel closed
@@ -177,7 +192,13 @@ async fn process_events(
 
     // Drain any additional pending events without blocking
     while let Ok(event) = rx.try_recv() {
-        process_single_event(event, containers, should_quit, table_state);
+        process_single_event(
+            event,
+            containers,
+            sorted_container_ids,
+            should_quit,
+            table_state,
+        );
     }
 }
 
@@ -185,21 +206,45 @@ async fn process_events(
 fn process_single_event(
     event: AppEvent,
     containers: &mut HashMap<String, Container>,
+    sorted_container_ids: &mut Vec<String>,
     should_quit: &mut bool,
     table_state: &mut TableState,
 ) {
     match event {
         AppEvent::InitialContainerList(container_list) => {
             for container in container_list {
-                containers.insert(container.id.clone(), container);
+                let id = container.id.clone();
+                containers.insert(id.clone(), container);
+                sorted_container_ids.push(id);
             }
+            // Sort once after adding all initial containers
+            sorted_container_ids.sort_by(|a, b| {
+                let name_a = containers.get(a).map(|c| &c.name).unwrap_or(a);
+                let name_b = containers.get(b).map(|c| &c.name).unwrap_or(b);
+                name_a.cmp(name_b)
+            });
             // Select first row if we have containers
             if !containers.is_empty() {
                 table_state.select(Some(0));
             }
         }
         AppEvent::ContainerCreated(container) => {
-            containers.insert(container.id.clone(), container);
+            let id = container.id.clone();
+            let name = container.name.clone();
+            containers.insert(id.clone(), container);
+
+            // Insert into sorted position
+            let insert_pos = sorted_container_ids
+                .binary_search_by(|probe_id| {
+                    let probe_name = containers
+                        .get(probe_id)
+                        .map(|c| &c.name)
+                        .unwrap_or(probe_id);
+                    probe_name.cmp(&name)
+                })
+                .unwrap_or_else(|pos| pos);
+            sorted_container_ids.insert(insert_pos, id);
+
             // Select first row if this is the first container
             if containers.len() == 1 {
                 table_state.select(Some(0));
@@ -207,6 +252,8 @@ fn process_single_event(
         }
         AppEvent::ContainerDestroyed(id) => {
             containers.remove(&id);
+            sorted_container_ids.retain(|cid| cid != &id);
+
             // Adjust selection if needed
             let container_count = containers.len();
             if container_count == 0 {

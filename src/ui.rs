@@ -39,17 +39,16 @@ impl Default for UiStyles {
 pub fn render_ui(
     f: &mut Frame,
     containers: &HashMap<String, Container>,
+    sorted_container_ids: &[String],
     styles: &UiStyles,
     table_state: &mut TableState,
 ) {
     let size = f.area();
 
-    // Collect references instead of cloning
-    let mut container_refs: Vec<_> = containers.values().collect();
-    container_refs.sort_by(|a, b| a.name.cmp(&b.name));
-
-    let rows: Vec<Row> = container_refs
+    // Use pre-sorted list instead of sorting every frame
+    let rows: Vec<Row> = sorted_container_ids
         .iter()
+        .filter_map(|id| containers.get(id))
         .map(|c| create_container_row(c, styles))
         .collect();
 
