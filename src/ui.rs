@@ -60,16 +60,30 @@ pub fn render_ui(
 
 /// Creates a table row for a single container
 fn create_container_row<'a>(container: &'a Container, styles: &UiStyles) -> Row<'a> {
+    let cpu_bar = create_progress_bar(container.stats.cpu, 20);
     let cpu_style = get_percentage_style(container.stats.cpu, styles);
+
+    let memory_bar = create_progress_bar(container.stats.memory, 20);
     let memory_style = get_percentage_style(container.stats.memory, styles);
 
     Row::new(vec![
         Cell::from(container.id.as_str()),
         Cell::from(container.name.as_str()),
-        Cell::from(format!("{:.2}%", container.stats.cpu)).style(cpu_style),
-        Cell::from(format!("{:.2}%", container.stats.memory)).style(memory_style),
+        Cell::from(cpu_bar).style(cpu_style),
+        Cell::from(memory_bar).style(memory_style),
         Cell::from(container.status.as_str()),
     ])
+}
+
+/// Creates a text-based progress bar with percentage
+fn create_progress_bar(percentage: f64, width: usize) -> String {
+    let percentage = percentage.clamp(0.0, 100.0);
+    let filled_width = ((percentage / 100.0) * width as f64).round() as usize;
+    let empty_width = width.saturating_sub(filled_width);
+
+    let bar = format!("{}{}", "█".repeat(filled_width), "░".repeat(empty_width));
+
+    format!("{} {:5.1}%", bar, percentage)
 }
 
 /// Returns the appropriate style based on percentage value
@@ -100,11 +114,11 @@ fn create_table<'a>(
     Table::new(
         rows,
         [
-            Constraint::Length(12),
-            Constraint::Max(30),
-            Constraint::Fill(1),
-            Constraint::Fill(1),
-            Constraint::Length(15),
+            Constraint::Length(12), // Container ID
+            Constraint::Fill(1),    // Name (flexible)
+            Constraint::Length(28), // CPU progress bar (20 chars + " 100.0%")
+            Constraint::Length(28), // Memory progress bar (20 chars + " 100.0%")
+            Constraint::Length(15), // Status
         ],
     )
     .header(header)
@@ -234,10 +248,10 @@ mod tests {
         let buffer = terminal.backend().buffer();
         let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
 
-        // Verify the CPU percentage appears in the output
+        // Verify the CPU percentage appears in the output (now in progress bar format)
         assert!(
-            content.contains("85.50%"),
-            "Should find CPU value 85.50% in buffer"
+            content.contains("85.5%"),
+            "Should find CPU value 85.5% in buffer"
         );
 
         // Check that we have red-colored cells in the high CPU range
