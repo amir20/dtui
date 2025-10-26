@@ -6,9 +6,9 @@ Buffer {
     area: Rect { x: 0, y: 0, width: 120, height: 25 },
     content: [
         "┌Docker Container CPU Monitor - 1 containers (↑/↓ to navigate, 'q' to quit)────────────────────────────────────────────┐",
-        "│Host                 Container ID Name       CPU %                        Memory %                     Status         │",
+        "│ID           Name       Host                 CPU %                        Memory %                     Status         │",
         "│                                                                                                                      │",
-        "│local                abc123def456 nginx      █████░░░░░░░░░░░░░░░  25.5%  ██████░░░░░░░░░░░░░░  30.2%  running        │",
+        "│abc123def456 nginx      local                █████░░░░░░░░░░░░░░░  25.5%  ██████░░░░░░░░░░░░░░  30.2%  running        │",
         "│                                                                                                                      │",
         "│                                                                                                                      │",
         "│                                                                                                                      │",

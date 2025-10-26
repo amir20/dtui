@@ -100,16 +100,9 @@ pub fn get_percentage_style(value: f64, styles: &UiStyles) -> Style {
 
 /// Creates the table header row
 fn create_header_row(styles: &UiStyles) -> Row<'static> {
-    Row::new(vec![
-        "Container ID",
-        "Name",
-        "Host",
-        "CPU %",
-        "Memory %",
-        "Status",
-    ])
-    .style(styles.header)
-    .bottom_margin(1)
+    Row::new(vec!["ID", "Name", "Host", "CPU %", "Memory %", "Status"])
+        .style(styles.header)
+        .bottom_margin(1)
 }
 
 /// Creates the complete table widget
