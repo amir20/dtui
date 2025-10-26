@@ -164,12 +164,13 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
 
         let containers = HashMap::new();
+        let sorted_ids: Vec<String> = vec![];
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &styles, &mut table_state);
+                render_ui(f, &containers, &sorted_ids, &styles, &mut table_state);
             })
             .unwrap();
 
@@ -191,12 +192,13 @@ mod tests {
             create_test_container("test123", "nginx", 25.5, 45.0),
         );
 
+        let sorted_ids = vec!["test123".to_string()];
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &styles, &mut table_state);
+                render_ui(f, &containers, &sorted_ids, &styles, &mut table_state);
             })
             .unwrap();
 
@@ -219,12 +221,13 @@ mod tests {
             create_test_container("test123", "nginx", 85.5, 45.0),
         );
 
+        let sorted_ids = vec!["test123".to_string()];
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &styles, &mut table_state);
+                render_ui(f, &containers, &sorted_ids, &styles, &mut table_state);
             })
             .unwrap();
 
@@ -269,12 +272,14 @@ mod tests {
             create_test_container("3", "mysql", 50.0, 60.0),
         );
 
+        // Sort by name alphabetically
+        let sorted_ids = vec!["2".to_string(), "3".to_string(), "1".to_string()];
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &styles, &mut table_state);
+                render_ui(f, &containers, &sorted_ids, &styles, &mut table_state);
             })
             .unwrap();
 
@@ -303,11 +308,12 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
 
         let containers = HashMap::new();
+        let sorted_ids: Vec<String> = vec![];
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
         terminal
-            .draw(|f| render_ui(f, &containers, &styles, &mut table_state))
+            .draw(|f| render_ui(f, &containers, &sorted_ids, &styles, &mut table_state))
             .unwrap();
 
         let buffer = terminal.backend().buffer();
@@ -325,10 +331,11 @@ mod tests {
             create_test_container("abc123def456", "nginx", 25.5, 30.2),
         );
 
+        let sorted_ids = vec!["abc123def456".to_string()];
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
         terminal
-            .draw(|f| render_ui(f, &containers, &styles, &mut table_state))
+            .draw(|f| render_ui(f, &containers, &sorted_ids, &styles, &mut table_state))
             .unwrap();
 
         let buffer = terminal.backend().buffer();
@@ -354,10 +361,15 @@ mod tests {
             create_test_container("container3", "redis", 92.8, 88.3),
         );
 
+        let sorted_ids = vec![
+            "container1".to_string(),
+            "container2".to_string(),
+            "container3".to_string(),
+        ];
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
         terminal
-            .draw(|f| render_ui(f, &containers, &styles, &mut table_state))
+            .draw(|f| render_ui(f, &containers, &sorted_ids, &styles, &mut table_state))
             .unwrap();
 
         let buffer = terminal.backend().buffer();
