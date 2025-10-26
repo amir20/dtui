@@ -123,28 +123,42 @@ async fn run_event_loop(
     rx: &mut mpsc::Receiver<AppEvent>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut containers: HashMap<String, Container> = HashMap::new();
+    let mut sorted_container_ids: Vec<String> = Vec::new(); // Pre-sorted list of container IDs
     let mut should_quit = false;
     let mut table_state = TableState::default();
     let draw_interval = Duration::from_millis(500); // Refresh UI every 500ms
+    let mut last_draw = std::time::Instant::now();
 
     // Pre-allocate styles to avoid recreation every frame
     let styles = UiStyles::default();
 
     while !should_quit {
         // Wait for events with timeout - handles both throttling and waiting
-        process_events(
+        let force_draw = process_events(
             rx,
             &mut containers,
+            &mut sorted_container_ids,
             &mut should_quit,
             &mut table_state,
             draw_interval,
         )
         .await;
 
-        // Draw UI after processing events
-        terminal.draw(|f| {
-            render_ui(f, &containers, &styles, &mut table_state);
-        })?;
+        // Draw UI if forced (table structure changed) or if draw_interval has elapsed
+        let should_draw = force_draw || last_draw.elapsed() >= draw_interval;
+
+        if should_draw {
+            terminal.draw(|f| {
+                render_ui(
+                    f,
+                    &containers,
+                    &sorted_container_ids,
+                    &styles,
+                    &mut table_state,
+                );
+            })?;
+            last_draw = std::time::Instant::now();
+        }
     }
 
     Ok(())
@@ -152,61 +166,108 @@ async fn run_event_loop(
 
 /// Processes all pending events from the event channel
 /// Waits with timeout for at least one event, then drains all pending events
+/// Returns true if a force draw is needed (table structure changed)
 async fn process_events(
     rx: &mut mpsc::Receiver<AppEvent>,
     containers: &mut HashMap<String, Container>,
+    sorted_container_ids: &mut Vec<String>,
     should_quit: &mut bool,
     table_state: &mut TableState,
     timeout: Duration,
-) {
+) -> bool {
+    let mut force_draw = false;
+
     // Wait for first event with timeout
     match tokio::time::timeout(timeout, rx.recv()).await {
         Ok(Some(event)) => {
-            process_single_event(event, containers, should_quit, table_state);
+            force_draw |= process_single_event(
+                event,
+                containers,
+                sorted_container_ids,
+                should_quit,
+                table_state,
+            );
         }
         Ok(None) => {
             // Channel closed
             *should_quit = true;
-            return;
+            return false;
         }
         Err(_) => {
-            // Timeout - no events, just return to redraw
-            return;
+            // Timeout - no events, just return without forcing draw
+            return false;
         }
     }
 
     // Drain any additional pending events without blocking
     while let Ok(event) = rx.try_recv() {
-        process_single_event(event, containers, should_quit, table_state);
+        force_draw |= process_single_event(
+            event,
+            containers,
+            sorted_container_ids,
+            should_quit,
+            table_state,
+        );
     }
+
+    force_draw
 }
 
 /// Processes a single event
+/// Returns true if this event requires an immediate draw (table structure changed)
 fn process_single_event(
     event: AppEvent,
     containers: &mut HashMap<String, Container>,
+    sorted_container_ids: &mut Vec<String>,
     should_quit: &mut bool,
     table_state: &mut TableState,
-) {
+) -> bool {
     match event {
         AppEvent::InitialContainerList(container_list) => {
             for container in container_list {
-                containers.insert(container.id.clone(), container);
+                let id = container.id.clone();
+                containers.insert(id.clone(), container);
+                sorted_container_ids.push(id);
             }
+            // Sort once after adding all initial containers
+            sorted_container_ids.sort_by(|a, b| {
+                let name_a = containers.get(a).map(|c| &c.name).unwrap_or(a);
+                let name_b = containers.get(b).map(|c| &c.name).unwrap_or(b);
+                name_a.cmp(name_b)
+            });
             // Select first row if we have containers
             if !containers.is_empty() {
                 table_state.select(Some(0));
             }
+            true // Force draw - table structure changed
         }
         AppEvent::ContainerCreated(container) => {
-            containers.insert(container.id.clone(), container);
+            let id = container.id.clone();
+            let name = container.name.clone();
+            containers.insert(id.clone(), container);
+
+            // Insert into sorted position
+            let insert_pos = sorted_container_ids
+                .binary_search_by(|probe_id| {
+                    let probe_name = containers
+                        .get(probe_id)
+                        .map(|c| &c.name)
+                        .unwrap_or(probe_id);
+                    probe_name.cmp(&name)
+                })
+                .unwrap_or_else(|pos| pos);
+            sorted_container_ids.insert(insert_pos, id);
+
             // Select first row if this is the first container
             if containers.len() == 1 {
                 table_state.select(Some(0));
             }
+            true // Force draw - table structure changed
         }
         AppEvent::ContainerDestroyed(id) => {
             containers.remove(&id);
+            sorted_container_ids.retain(|cid| cid != &id);
+
             // Adjust selection if needed
             let container_count = containers.len();
             if container_count == 0 {
@@ -216,18 +277,22 @@ fn process_single_event(
             {
                 table_state.select(Some(container_count - 1));
             }
+            true // Force draw - table structure changed
         }
         AppEvent::ContainerStat(id, stats) => {
             // Update stats on existing container
             if let Some(container) = containers.get_mut(&id) {
                 container.stats = stats;
             }
+            false // No force draw - just stats update
         }
         AppEvent::Resize => {
             // Just process the event - UI will redraw immediately after
+            true // Force draw - UI needs to adjust to new size
         }
         AppEvent::Quit => {
             *should_quit = true;
+            false // No need to draw when quitting
         }
         AppEvent::SelectPrevious => {
             let container_count = containers.len();
@@ -237,6 +302,7 @@ fn process_single_event(
                     table_state.select(Some(selected - 1));
                 }
             }
+            true // Force draw - selection changed
         }
         AppEvent::SelectNext => {
             let container_count = containers.len();
@@ -246,6 +312,7 @@ fn process_single_event(
                     table_state.select(Some(selected + 1));
                 }
             }
+            true // Force draw - selection changed
         }
     }
 }

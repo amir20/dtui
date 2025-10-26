@@ -26,6 +26,11 @@ lto = true            # Link-time optimization for better performance
 codegen-units = 1     # Single codegen unit for maximum optimization
 opt-level = "z"       # Optimize for size
 
+[profile.release-with-debug]
+inherits = "release"
+strip = false
+debug = true
+
 
 [package.metadata.release]
 publish = false
