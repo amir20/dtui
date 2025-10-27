@@ -73,10 +73,19 @@ docker-monitor --host ssh://user@remote-host
 docker-monitor --host ssh://user@remote-host:2222
 ```
 
+### Monitor Remote Docker Host via TCP
+
+```bash
+# Connect to Docker daemon via TCP (port 2375 is typical for unencrypted)
+docker-monitor --host tcp://192.168.1.100:2375
+
+# Note: TCP connections are unencrypted. Only use on trusted networks.
+```
+
 ### Monitor Multiple Hosts Simultaneously
 
 ```bash
-docker-monitor --host local --host ssh://user@host1 --host ssh://user@host2
+docker-monitor --host local --host ssh://user@host1 --host tcp://192.168.1.100:2375
 ```
 
 ### Using Configuration Files
@@ -93,6 +102,7 @@ Example `config.yaml`:
 hosts:
   - host: local
   - host: ssh://user@server1
+  - host: tcp://192.168.1.100:2375
   - host: ssh://root@146.190.3.114
     dozzle: https://l.dozzle.dev/
 ```

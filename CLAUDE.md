@@ -11,8 +11,9 @@ Docker Monitor is a terminal-based Docker container monitoring tool built with R
 ```bash
 # Development
 cargo run                                    # Run with local Docker daemon (or config file)
-cargo run -- --host ssh://user@host         # Run with remote Docker host
-cargo run -- --host local --host ssh://user@host1 --host ssh://user@host2  # Multiple hosts
+cargo run -- --host ssh://user@host         # Run with remote Docker host via SSH
+cargo run -- --host tcp://host:2375         # Run with remote Docker host via TCP
+cargo run -- --host local --host ssh://user@host1 --host tcp://host2:2375  # Multiple hosts
 
 # Production build
 cargo build --release
@@ -35,6 +36,7 @@ Example config file (`config.yaml`):
 hosts:
   - host: local
   - host: ssh://user@server1
+  - host: tcp://192.168.1.100:2375
   - host: ssh://root@146.190.3.114
     dozzle: https://l.dozzle.dev/
 ```
@@ -141,11 +143,14 @@ The merge logic:
 
 ### Docker Connection
 
-The `connect_docker()` function in `main.rs` handles two connection modes:
+The `connect_docker()` function in `main.rs` handles three connection modes:
 - `--host local`: Uses local Docker socket
 - `--host ssh://user@host[:port]`: Connects via SSH (requires Bollard SSH feature)
+- `--host tcp://host:port`: Connects via TCP to remote Docker daemon
 
 Multiple `--host` arguments can be provided to monitor multiple Docker hosts simultaneously.
+
+**Note:** TCP connections are unencrypted. Only use on trusted networks or with proper firewall rules.
 
 ### Stats Calculation
 

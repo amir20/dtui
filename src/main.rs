@@ -32,7 +32,8 @@ struct Args {
     ///   --host local                    (Connect to local Docker daemon)
     ///   --host ssh://user@host          (Connect via SSH)
     ///   --host ssh://user@host:2222     (Connect via SSH with custom port)
-    ///   --host local --host ssh://user@server1 --host ssh://user@server2  (Multiple hosts)
+    ///   --host tcp://host:2375          (Connect via TCP to remote Docker daemon)
+    ///   --host local --host ssh://user@server1 --host tcp://server2:2375  (Multiple hosts)
     ///
     /// If not specified, will use config file or default to "local"
     #[arg(short = 'H', long)]
@@ -122,6 +123,12 @@ fn create_host_id(host_spec: &str) -> String {
             .next()
             .unwrap_or(host_spec)
             .to_string()
+    } else if host_spec.starts_with("tcp://") {
+        // Extract host:port from tcp://host:port
+        host_spec
+            .strip_prefix("tcp://")
+            .unwrap_or(host_spec)
+            .to_string()
     } else {
         host_spec.to_string()
     }
@@ -139,9 +146,16 @@ fn connect_docker(host: &str) -> Result<Docker, Box<dyn std::error::Error>> {
             120, // timeout in seconds
             API_DEFAULT_VERSION,
         )?)
+    } else if host.starts_with("tcp://") {
+        // Connect via TCP (remote Docker daemon)
+        Ok(Docker::connect_with_http(
+            host,
+            120, // timeout in seconds
+            API_DEFAULT_VERSION,
+        )?)
     } else {
         Err(format!(
-            "Invalid host format: '{}'. Use 'local' or 'ssh://user@host[:port]'",
+            "Invalid host format: '{}'. Use 'local', 'ssh://user@host[:port]', or 'tcp://host:port'",
             host
         )
         .into())
