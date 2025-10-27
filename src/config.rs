@@ -70,16 +70,9 @@ impl Config {
     /// Merge config with command line arguments
     /// CLI args take precedence over config file values
     pub fn merge_with_cli_hosts(mut self, cli_hosts: Vec<String>, cli_default: bool) -> Self {
-        // If CLI hosts are explicitly provided (not default), use them
-        // Otherwise, use config file hosts
-        if !cli_default {
+        // Use CLI hosts if explicitly provided, OR if config file is empty
+        if !cli_default || self.hosts.is_empty() {
             // Convert CLI strings to HostConfig structs (no dozzle URL from CLI)
-            self.hosts = cli_hosts
-                .into_iter()
-                .map(|host| HostConfig { host, dozzle: None })
-                .collect();
-        } else if self.hosts.is_empty() {
-            // If both are empty/default, use the CLI default
             self.hosts = cli_hosts
                 .into_iter()
                 .map(|host| HostConfig { host, dozzle: None })
