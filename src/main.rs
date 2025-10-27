@@ -1,3 +1,4 @@
+mod config;
 mod docker;
 mod input;
 mod types;
@@ -15,6 +16,7 @@ use std::io;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
+use config::Config;
 use docker::{DockerHost, container_manager};
 use input::keyboard_worker;
 use types::{AppEvent, Container, ContainerKey};
@@ -31,7 +33,9 @@ struct Args {
     ///   --host ssh://user@host          (Connect via SSH)
     ///   --host ssh://user@host:2222     (Connect via SSH with custom port)
     ///   --host local --host ssh://user@server1 --host ssh://user@server2  (Multiple hosts)
-    #[arg(short = 'H', long, default_value = "local")]
+    ///
+    /// If not specified, will use config file or default to "local"
+    #[arg(short = 'H', long)]
     host: Vec<String>,
 }
 
@@ -40,11 +44,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse command line arguments
     let args = Args::parse();
 
-    // Ensure we have at least one host
-    let hosts = if args.host.is_empty() {
+    // Load config file if it exists
+    let config = Config::load()?.unwrap_or_default();
+
+    // Determine if CLI hosts were explicitly provided
+    let cli_provided = !args.host.is_empty();
+
+    // Merge config with CLI args (CLI takes precedence)
+    let merged_config = if cli_provided {
+        // User explicitly provided --host, use CLI args
+        config.merge_with_cli_hosts(args.host.clone(), false)
+    } else if !config.hosts.is_empty() {
+        // No CLI args but config has hosts, use config
+        config
+    } else {
+        // Neither CLI nor config provided hosts, use default "local"
+        config.merge_with_cli_hosts(vec!["local".to_string()], true)
+    };
+
+    // Get final list of hosts
+    let hosts: Vec<String> = if merged_config.hosts.is_empty() {
         vec!["local".to_string()]
     } else {
-        args.host
+        merged_config
+            .host_strings()
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect()
     };
 
     // Setup terminal

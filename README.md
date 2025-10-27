@@ -72,6 +72,39 @@ docker-monitor --host ssh://user@remote-host
 # Custom SSH port
 docker-monitor --host ssh://user@remote-host:2222
 ```
+
+### Monitor Multiple Hosts Simultaneously
+
+```bash
+docker-monitor --host local --host ssh://user@host1 --host ssh://user@host2
+```
+
+### Using Configuration Files
+
+Docker Monitor supports YAML configuration files for persistent settings. Config files are searched in the following order (first found wins):
+
+1. `./config.yaml` or `./config.yml` (relative to current directory)
+2. `~/.config/dtui/config.yaml` or `~/.config/dtui/config.yml`
+3. `~/dtui.yaml` or `~/dtui.yml`
+
+Example `config.yaml`:
+
+```yaml
+hosts:
+  - host: local
+  - host: ssh://user@server1
+  - host: ssh://root@146.190.3.114
+    dozzle: https://l.dozzle.dev/
+```
+
+Each host entry supports the following fields:
+- `host`: Docker connection string (required)
+- `dozzle`: URL to Dozzle instance for this host (optional, for future features)
+- More fields can be added in the future
+
+**Note:** Command line arguments take precedence over config file values.
+
+See `config.example.yaml` for a complete example.
 ## Requirements
 
 - Docker daemon running locally or accessible via SSH
@@ -161,7 +194,7 @@ Ensure:
 - [ ] Network and disk I/O metrics
 - [ ] Historical data graphs
 - [ ] Support for Docker Compose projects
-- [ ] Configuration file support
+- [x] Configuration file support
 - [ ] Custom refresh intervals
 
 ## Acknowledgments

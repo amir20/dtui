@@ -1,13 +1,8 @@
 # Rust build artifacts
 /target/
 
-
 # Profile and analysis files
 *.svg
-*.json.gz
-profile.sh
-flamegraph.svg
-profile.json.gz
 
 # IDE and editor files
 .idea/
@@ -18,6 +13,6 @@ profile.json.gz
 .DS_Store
 
 # Backup files
-*.bak
-*.tmp
 *.log
+
+config.yaml

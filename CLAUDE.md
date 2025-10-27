@@ -10,7 +10,7 @@ Docker Monitor is a terminal-based Docker container monitoring tool built with R
 
 ```bash
 # Development
-cargo run                                    # Run with local Docker daemon
+cargo run                                    # Run with local Docker daemon (or config file)
 cargo run -- --host ssh://user@host         # Run with remote Docker host
 cargo run -- --host local --host ssh://user@host1 --host ssh://user@host2  # Multiple hosts
 
@@ -19,6 +19,32 @@ cargo build --release
 
 # The binary will be at target/release/docker-monitor
 ```
+
+## Configuration
+
+The application supports configuration via YAML files. Config files are searched in the following order (first found wins):
+
+1. `./config.yaml` or `./config.yml` (relative to current directory)
+2. `~/.config/dtui/config.yaml` or `~/.config/dtui/config.yml`
+3. `~/dtui.yaml` or `~/dtui.yml`
+
+**Command line arguments take precedence over config file values.**
+
+Example config file (`config.yaml`):
+```yaml
+hosts:
+  - host: local
+  - host: ssh://user@server1
+  - host: ssh://root@146.190.3.114
+    dozzle: https://l.dozzle.dev/
+```
+
+Each host entry is a struct with:
+- `host`: Docker connection string (required)
+- `dozzle`: Optional URL to Dozzle instance
+- Future optional fields can be added as needed
+
+See `config.example.yaml` for a complete example.
 
 ## Architecture
 
@@ -91,6 +117,28 @@ Host IDs are derived from the host specification:
 - `"ssh://user@host"` → host_id = `"user@host"`
 - `"ssh://user@host:2222"` → host_id = `"user@host"` (port stripped)
 
+### Configuration Loading
+
+The `Config` struct (`config.rs`) handles YAML configuration file loading:
+- Searches multiple locations in priority order (see Configuration section above)
+- Merges config file values with CLI arguments (CLI takes precedence)
+- Uses `serde_yaml` for deserialization
+- Uses `dirs` crate for home directory detection
+
+**Host Configuration Format:**
+The `HostConfig` struct contains:
+- `host`: String - The Docker connection string (required)
+- `dozzle`: Option<String> - URL to Dozzle instance (optional)
+- Additional optional fields can be added in the future
+
+All fields except `host` are optional and use `#[serde(skip_serializing_if = "Option::is_none")]`.
+
+The merge logic:
+- If CLI hosts are explicitly provided (not default), they override config file
+- If CLI uses default (`--host local`) and config file has hosts, config file is used
+- If both are empty/default, defaults to `local`
+- CLI hosts are converted to `HostConfig` structs with `dozzle: None`
+
 ### Docker Connection
 
 The `connect_docker()` function in `main.rs` handles two connection modes:
@@ -141,6 +189,8 @@ Containers are sorted first by `host_id`, then by container name within each hos
 - **Ratatui**: Terminal UI framework
 - **Crossterm**: Cross-platform terminal manipulation
 - **Clap**: CLI argument parsing
+- **Serde/Serde_yaml**: Configuration file deserialization
+- **Dirs**: Cross-platform home directory detection
 
 ## Performance Considerations
 
