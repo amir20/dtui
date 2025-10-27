@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: "curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.30.0/cargo-dist-installer.sh | sh"
       - name: Cache dist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cargo-dist-cache
           path: ~/.cargo/bin/dist
@@ -34,7 +34,7 @@ jobs:
           cat plan-dist-manifest.json
           echo "manifest=$(jq -c "." plan-dist-manifest.json)" >> "$GITHUB_OUTPUT"
       - name: "Upload dist-manifest.json"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: artifacts-plan-dist-manifest
           path: plan-dist-manifest.json
@@ -71,7 +71,7 @@ jobs:
         run: ${{ matrix.install_dist.run }}
       # Get the dist-manifest
       - name: Fetch local artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: artifacts-*
           path: target/distrib/
@@ -95,7 +95,7 @@ jobs:
 
           cp dist-manifest.json "$BUILD_MANIFEST_NAME"
       - name: "Upload artifacts"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: artifacts-pr-${{ github.event.pull_request.number }}-${{ join(matrix.targets, '_') }}
           path: |
@@ -114,7 +114,7 @@ jobs:
     steps:
       - name: Download all artifacts
         if: needs.build-artifacts.result == 'success'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: artifacts-pr-${{ github.event.pull_request.number }}-*
           path: artifacts
