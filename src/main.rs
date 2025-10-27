@@ -1,6 +1,7 @@
 mod config;
 mod docker;
 mod input;
+mod stats;
 mod types;
 mod ui;
 
