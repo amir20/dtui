@@ -289,8 +289,8 @@ fn process_single_event(
             }
             true // Force draw - table structure changed
         }
-        AppEvent::ContainerCreated(host_id, container) => {
-            let key = ContainerKey::new(host_id.clone(), container.id.clone());
+        AppEvent::ContainerCreated(container) => {
+            let key = ContainerKey::new(container.host_id.clone(), container.id.clone());
             let sort_key = (container.host_id.clone(), container.name.clone());
             containers.insert(key.clone(), container);
 
@@ -310,8 +310,7 @@ fn process_single_event(
             }
             true // Force draw - table structure changed
         }
-        AppEvent::ContainerDestroyed(host_id, container_id) => {
-            let key = ContainerKey::new(host_id, container_id);
+        AppEvent::ContainerDestroyed(key) => {
             containers.remove(&key);
             sorted_container_keys.retain(|k| k != &key);
 
@@ -326,9 +325,8 @@ fn process_single_event(
             }
             true // Force draw - table structure changed
         }
-        AppEvent::ContainerStat(host_id, container_id, stats) => {
+        AppEvent::ContainerStat(key, stats) => {
             // Update stats on existing container
-            let key = ContainerKey::new(host_id, container_id);
             if let Some(container) = containers.get_mut(&key) {
                 container.stats = stats;
             }

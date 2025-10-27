@@ -7,7 +7,7 @@ use futures_util::stream::StreamExt;
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::types::{AppEvent, Container, ContainerStats, EventSender, HostId};
+use crate::types::{AppEvent, Container, ContainerKey, ContainerStats, EventSender, HostId};
 
 /// Represents a Docker host connection with its identifier
 #[derive(Clone)]
@@ -47,15 +47,8 @@ pub async fn stream_container_stats(host: DockerHost, truncated_id: String, tx: 
                     memory: memory_percent,
                 };
 
-                if tx
-                    .send(AppEvent::ContainerStat(
-                        host.host_id.clone(),
-                        truncated_id.clone(),
-                        stats,
-                    ))
-                    .await
-                    .is_err()
-                {
+                let key = ContainerKey::new(host.host_id.clone(), truncated_id.clone());
+                if tx.send(AppEvent::ContainerStat(key, stats)).await.is_err() {
                     break;
                 }
             }
@@ -64,9 +57,8 @@ pub async fn stream_container_stats(host: DockerHost, truncated_id: String, tx: 
     }
 
     // Notify that this container stream ended
-    let _ = tx
-        .send(AppEvent::ContainerDestroyed(host.host_id, truncated_id))
-        .await;
+    let key = ContainerKey::new(host.host_id, truncated_id);
+    let _ = tx.send(AppEvent::ContainerDestroyed(key)).await;
 }
 
 /// Calculates CPU usage percentage from container stats
@@ -289,9 +281,7 @@ async fn handle_container_start(
                 host_id: host.host_id.clone(),
             };
 
-            let _ = tx
-                .send(AppEvent::ContainerCreated(host.host_id.clone(), container))
-                .await;
+            let _ = tx.send(AppEvent::ContainerCreated(container)).await;
 
             start_container_monitoring(host, &truncated_id, tx, active_containers);
         }
@@ -310,12 +300,8 @@ async fn handle_container_stop(
     // Stop monitoring and notify removal
     if let Some(handle) = active_containers.remove(&truncated_id) {
         handle.abort();
-        let _ = tx
-            .send(AppEvent::ContainerDestroyed(
-                host.host_id.clone(),
-                truncated_id,
-            ))
-            .await;
+        let key = ContainerKey::new(host.host_id.clone(), truncated_id);
+        let _ = tx.send(AppEvent::ContainerDestroyed(key)).await;
     }
 }
 

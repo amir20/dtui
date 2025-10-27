@@ -64,12 +64,12 @@ Keyboard          → keyboard_worker   → AppEvent::Quit → Main Loop → Exi
 
 ### Event Types (`types.rs::AppEvent`)
 
-All container-related events now include a `HostId` parameter:
+Container-related events use structured types to identify containers across hosts:
 
 - `InitialContainerList(HostId, Vec<Container>)` - Batch of containers from a specific host on startup
-- `ContainerCreated(HostId, Container)` - New container started on a specific host
-- `ContainerDestroyed(HostId, String)` - Container stopped/died on a specific host
-- `ContainerStat(HostId, String, ContainerStats)` - Stats update from a container on a specific host
+- `ContainerCreated(Container)` - New container started (host_id is in the Container struct)
+- `ContainerDestroyed(ContainerKey)` - Container stopped/died (identified by host_id + container_id)
+- `ContainerStat(ContainerKey, ContainerStats)` - Stats update (identified by host_id + container_id)
 - `Quit` - User pressed 'q'
 - `Resize` - Terminal was resized
 - `SelectPrevious` - Move selection up

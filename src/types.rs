@@ -39,12 +39,12 @@ impl ContainerKey {
 pub enum AppEvent {
     /// Initial list of containers when app starts for a specific host
     InitialContainerList(HostId, Vec<Container>),
-    /// A new container was created/started on a specific host
-    ContainerCreated(HostId, Container),
+    /// A new container was created/started (host_id is in the Container)
+    ContainerCreated(Container),
     /// A container was stopped/destroyed on a specific host
-    ContainerDestroyed(HostId, String),
+    ContainerDestroyed(ContainerKey),
     /// Stats update for an existing container on a specific host
-    ContainerStat(HostId, String, ContainerStats),
+    ContainerStat(ContainerKey, ContainerStats),
     /// User requested to quit
     Quit,
     /// Terminal was resized
