@@ -15,6 +15,9 @@ tokio = { version = "1", features = ["full"] }
 futures-util = "0.3"
 bollard = {version= "0.19.3", features = ["ssh"]}
 clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+dirs = "5.0"
 
 [dev-dependencies]
 insta = "1.34"

@@ -1,3 +1,4 @@
+mod config;
 mod docker;
 mod input;
 mod types;
@@ -15,6 +16,7 @@ use std::io;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
+use config::Config;
 use docker::{DockerHost, container_manager};
 use input::keyboard_worker;
 use types::{AppEvent, Container, ContainerKey};
@@ -40,11 +42,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse command line arguments
     let args = Args::parse();
 
-    // Ensure we have at least one host
-    let hosts = if args.host.is_empty() {
+    // Load config file if it exists
+    let config = Config::load()?.unwrap_or_default();
+
+    // Determine if CLI hosts were explicitly provided (not just default)
+    let cli_default = args.host.len() == 1 && args.host[0] == "local";
+
+    // Merge config with CLI args (CLI takes precedence)
+    let merged_config = config.merge_with_cli_hosts(args.host.clone(), cli_default);
+
+    // Get final list of hosts
+    let hosts: Vec<String> = if merged_config.hosts.is_empty() {
         vec!["local".to_string()]
     } else {
-        args.host
+        merged_config
+            .host_strings()
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect()
     };
 
     // Setup terminal
