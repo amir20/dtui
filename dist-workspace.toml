@@ -8,7 +8,7 @@ cargo-dist-version = "0.30.0"
 # CI backends to support
 ci = "github"
 # The installers to generate for each app
-installers = ["shell", "powershell", "homebrew"]
+installers = ["shell", "powershell"] # disable homebrew for now
 # A GitHub repo to push Homebrew formulas to
 tap = "amir20/homebrew-dtop"
 # Target platforms to build apps for (Rust target-triple syntax)
