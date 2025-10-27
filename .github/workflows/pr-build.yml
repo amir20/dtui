@@ -11,7 +11,7 @@ permissions:
 jobs:
   # Run 'dist plan' to determine what tasks we need to do
   plan:
-    runs-on: "ubuntu-22.04"
+    runs-on: "ubuntu-24.04"
     outputs:
       val: ${{ steps.plan.outputs.manifest }}
     steps:
