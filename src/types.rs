@@ -18,6 +18,10 @@ pub struct Container {
 pub struct ContainerStats {
     pub cpu: f64,
     pub memory: f64,
+    /// Network transmit rate in bytes per second
+    pub network_tx_bytes_per_sec: f64,
+    /// Network receive rate in bytes per second
+    pub network_rx_bytes_per_sec: f64,
 }
 
 /// Unique key for identifying containers across multiple hosts

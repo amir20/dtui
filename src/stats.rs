@@ -1,6 +1,7 @@
 use bollard::models::ContainerStatsResponse;
 use bollard::query_parameters::StatsOptions;
 use futures_util::stream::StreamExt;
+use std::time::Instant;
 
 use crate::docker::DockerHost;
 use crate::types::{AppEvent, ContainerKey, ContainerStats, EventSender};
@@ -28,12 +29,27 @@ pub async fn stream_container_stats(host: DockerHost, truncated_id: String, tx: 
 
     let mut smoothed_cpu: Option<f64> = None;
     let mut smoothed_memory: Option<f64> = None;
+    let mut smoothed_net_tx: Option<f64> = None;
+    let mut smoothed_net_rx: Option<f64> = None;
+
+    // Track previous network stats for rate calculation
+    let mut prev_net_tx: Option<u64> = None;
+    let mut prev_net_rx: Option<u64> = None;
+    let mut prev_timestamp: Option<Instant> = None;
 
     while let Some(result) = stats_stream.next().await {
         match result {
             Ok(stats) => {
                 let cpu_percent = calculate_cpu_percentage(&stats);
                 let memory_percent = calculate_memory_percentage(&stats);
+                let (net_tx_rate, net_rx_rate) =
+                    calculate_network_rates(&stats, prev_net_tx, prev_net_rx, prev_timestamp);
+
+                // Update previous network values for next iteration
+                let (tx_bytes, rx_bytes) = extract_network_bytes(&stats);
+                prev_net_tx = tx_bytes;
+                prev_net_rx = rx_bytes;
+                prev_timestamp = Some(Instant::now());
 
                 // Apply exponential moving average
                 let cpu = match smoothed_cpu {
@@ -46,11 +62,28 @@ pub async fn stream_container_stats(host: DockerHost, truncated_id: String, tx: 
                     None => memory_percent, // First value, no smoothing
                 };
 
+                let network_tx_bytes_per_sec = match smoothed_net_tx {
+                    Some(prev) => ALPHA * net_tx_rate + (1.0 - ALPHA) * prev,
+                    None => net_tx_rate,
+                };
+
+                let network_rx_bytes_per_sec = match smoothed_net_rx {
+                    Some(prev) => ALPHA * net_rx_rate + (1.0 - ALPHA) * prev,
+                    None => net_rx_rate,
+                };
+
                 // Update smoothed values for next iteration
                 smoothed_cpu = Some(cpu);
                 smoothed_memory = Some(memory);
+                smoothed_net_tx = Some(network_tx_bytes_per_sec);
+                smoothed_net_rx = Some(network_rx_bytes_per_sec);
 
-                let stats = ContainerStats { cpu, memory };
+                let stats = ContainerStats {
+                    cpu,
+                    memory,
+                    network_tx_bytes_per_sec,
+                    network_rx_bytes_per_sec,
+                };
 
                 let key = ContainerKey::new(host.host_id.clone(), truncated_id.clone());
                 if tx.send(AppEvent::ContainerStat(key, stats)).await.is_err() {
@@ -115,6 +148,58 @@ pub fn calculate_memory_percentage(stats: &ContainerStatsResponse) -> f64 {
     } else {
         0.0
     }
+}
+
+/// Extracts total network bytes (tx, rx) from container stats
+fn extract_network_bytes(stats: &ContainerStatsResponse) -> (Option<u64>, Option<u64>) {
+    let networks = match &stats.networks {
+        Some(nets) => nets,
+        None => return (None, None),
+    };
+
+    let mut total_tx = 0u64;
+    let mut total_rx = 0u64;
+
+    for (_interface_name, interface_stats) in networks {
+        total_tx += interface_stats.tx_bytes.unwrap_or(0);
+        total_rx += interface_stats.rx_bytes.unwrap_or(0);
+    }
+
+    (Some(total_tx), Some(total_rx))
+}
+
+/// Calculates network transfer rates in bytes per second
+fn calculate_network_rates(
+    stats: &ContainerStatsResponse,
+    prev_tx: Option<u64>,
+    prev_rx: Option<u64>,
+    prev_time: Option<Instant>,
+) -> (f64, f64) {
+    let (current_tx, current_rx) = extract_network_bytes(stats);
+
+    // If we don't have previous values, return 0
+    let (prev_tx, prev_rx, prev_time) = match (prev_tx, prev_rx, prev_time) {
+        (Some(tx), Some(rx), Some(time)) => (tx, rx, time),
+        _ => return (0.0, 0.0),
+    };
+
+    let (current_tx, current_rx) = match (current_tx, current_rx) {
+        (Some(tx), Some(rx)) => (tx, rx),
+        _ => return (0.0, 0.0),
+    };
+
+    let elapsed = prev_time.elapsed().as_secs_f64();
+    if elapsed <= 0.0 {
+        return (0.0, 0.0);
+    }
+
+    let tx_delta = current_tx.saturating_sub(prev_tx) as f64;
+    let rx_delta = current_rx.saturating_sub(prev_rx) as f64;
+
+    let tx_rate = tx_delta / elapsed;
+    let rx_rate = rx_delta / elapsed;
+
+    (tx_rate, rx_rate)
 }
 
 #[cfg(test)]

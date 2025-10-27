@@ -66,12 +66,17 @@ fn create_container_row<'a>(container: &'a Container, styles: &UiStyles) -> Row<
     let memory_bar = create_progress_bar(container.stats.memory, 20);
     let memory_style = get_percentage_style(container.stats.memory, styles);
 
+    let network_tx = format_bytes_per_sec(container.stats.network_tx_bytes_per_sec);
+    let network_rx = format_bytes_per_sec(container.stats.network_rx_bytes_per_sec);
+
     Row::new(vec![
         Cell::from(container.id.as_str()),
         Cell::from(container.name.as_str()),
         Cell::from(container.host_id.as_str()),
         Cell::from(cpu_bar).style(cpu_style),
         Cell::from(memory_bar).style(memory_style),
+        Cell::from(network_tx),
+        Cell::from(network_rx),
         Cell::from(container.status.as_str()),
     ])
 }
@@ -87,6 +92,23 @@ fn create_progress_bar(percentage: f64, width: usize) -> String {
     format!("{} {:5.1}%", bar, percentage)
 }
 
+/// Formats bytes per second into a human-readable string (KB/s, MB/s, GB/s)
+fn format_bytes_per_sec(bytes_per_sec: f64) -> String {
+    const KB: f64 = 1024.0;
+    const MB: f64 = KB * 1024.0;
+    const GB: f64 = MB * 1024.0;
+
+    if bytes_per_sec >= GB {
+        format!("{:.2}GB/s", bytes_per_sec / GB)
+    } else if bytes_per_sec >= MB {
+        format!("{:.2}MB/s", bytes_per_sec / MB)
+    } else if bytes_per_sec >= KB {
+        format!("{:.1}KB/s", bytes_per_sec / KB)
+    } else {
+        format!("{:.0}B/s", bytes_per_sec)
+    }
+}
+
 /// Returns the appropriate style based on percentage value
 pub fn get_percentage_style(value: f64, styles: &UiStyles) -> Style {
     if value > 80.0 {
@@ -100,9 +122,11 @@ pub fn get_percentage_style(value: f64, styles: &UiStyles) -> Style {
 
 /// Creates the table header row
 fn create_header_row(styles: &UiStyles) -> Row<'static> {
-    Row::new(vec!["ID", "Name", "Host", "CPU %", "Memory %", "Status"])
-        .style(styles.header)
-        .bottom_margin(1)
+    Row::new(vec![
+        "ID", "Name", "Host", "CPU %", "Memory %", "Net TX", "Net RX", "Status",
+    ])
+    .style(styles.header)
+    .bottom_margin(1)
 }
 
 /// Creates the complete table widget
@@ -120,6 +144,8 @@ fn create_table<'a>(
             Constraint::Length(20), // Host
             Constraint::Length(28), // CPU progress bar (20 chars + " 100.0%")
             Constraint::Length(28), // Memory progress bar (20 chars + " 100.0%")
+            Constraint::Length(12), // Network TX (1.23MB/s)
+            Constraint::Length(12), // Network RX (4.56MB/s)
             Constraint::Length(15), // Status
         ],
     )
@@ -153,7 +179,12 @@ mod tests {
             id: id.to_string(),
             name: name.to_string(),
             status: "running".to_string(),
-            stats: ContainerStats { cpu, memory },
+            stats: ContainerStats {
+                cpu,
+                memory,
+                network_tx_bytes_per_sec: 0.0,
+                network_rx_bytes_per_sec: 0.0,
+            },
             host_id: host_id.to_string(),
         }
     }
@@ -206,7 +237,7 @@ mod tests {
 
     #[test]
     fn test_render_single_container() {
-        let backend = TestBackend::new(120, 30);
+        let backend = TestBackend::new(145, 30);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let mut containers = HashMap::new();
@@ -237,7 +268,7 @@ mod tests {
 
     #[test]
     fn test_render_container_with_high_cpu() {
-        let backend = TestBackend::new(120, 30);
+        let backend = TestBackend::new(145, 30);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let mut containers = HashMap::new();
@@ -281,7 +312,7 @@ mod tests {
 
     #[test]
     fn test_render_multiple_containers_sorted() {
-        let backend = TestBackend::new(120, 30);
+        let backend = TestBackend::new(145, 30);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let mut containers = HashMap::new();
@@ -401,7 +432,7 @@ mod tests {
 
     #[test]
     fn test_ui_snapshot_single_container_low_usage() {
-        let backend = TestBackend::new(120, 25);
+        let backend = TestBackend::new(145, 25);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let mut containers = HashMap::new();
@@ -424,7 +455,7 @@ mod tests {
 
     #[test]
     fn test_ui_snapshot_multiple_containers_mixed_usage() {
-        let backend = TestBackend::new(150, 30);
+        let backend = TestBackend::new(160, 30);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let mut containers = HashMap::new();
