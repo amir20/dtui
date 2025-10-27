@@ -24,6 +24,9 @@ impl DockerHost {
 
 /// Streams stats for a single container and sends updates via the event channel
 ///
+/// Uses exponential decay smoothing to reduce noise in stats:
+/// smoothed = alpha * new_value + (1 - alpha) * previous_smoothed
+///
 /// # Arguments
 /// * `host` - Docker host instance with identifier
 /// * `truncated_id` - Truncated container ID (12 chars) - Docker API accepts partial IDs
@@ -36,16 +39,35 @@ pub async fn stream_container_stats(host: DockerHost, truncated_id: String, tx: 
 
     let mut stats_stream = host.docker.stats(&truncated_id, Some(stats_options));
 
+    // Smoothing factor: higher alpha = more responsive, lower alpha = smoother
+    // 0.3 provides good balance between responsiveness and smoothness
+    const ALPHA: f64 = 0.3;
+
+    let mut smoothed_cpu: Option<f64> = None;
+    let mut smoothed_memory: Option<f64> = None;
+
     while let Some(result) = stats_stream.next().await {
         match result {
             Ok(stats) => {
                 let cpu_percent = calculate_cpu_percentage(&stats);
                 let memory_percent = calculate_memory_percentage(&stats);
 
-                let stats = ContainerStats {
-                    cpu: cpu_percent,
-                    memory: memory_percent,
+                // Apply exponential moving average
+                let cpu = match smoothed_cpu {
+                    Some(prev) => ALPHA * cpu_percent + (1.0 - ALPHA) * prev,
+                    None => cpu_percent, // First value, no smoothing
                 };
+
+                let memory = match smoothed_memory {
+                    Some(prev) => ALPHA * memory_percent + (1.0 - ALPHA) * prev,
+                    None => memory_percent, // First value, no smoothing
+                };
+
+                // Update smoothed values for next iteration
+                smoothed_cpu = Some(cpu);
+                smoothed_memory = Some(memory);
+
+                let stats = ContainerStats { cpu, memory };
 
                 let key = ContainerKey::new(host.host_id.clone(), truncated_id.clone());
                 if tx.send(AppEvent::ContainerStat(key, stats)).await.is_err() {
