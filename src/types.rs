@@ -1,5 +1,8 @@
 use tokio::sync::mpsc;
 
+/// Host identifier for tracking which Docker host a container belongs to
+pub type HostId = String;
+
 /// Container metadata (static information)
 #[derive(Clone, Debug)]
 pub struct Container {
@@ -7,6 +10,7 @@ pub struct Container {
     pub name: String,
     pub status: String,
     pub stats: ContainerStats,
+    pub host_id: HostId,
 }
 
 /// Container runtime statistics (updated frequently)
@@ -16,15 +20,31 @@ pub struct ContainerStats {
     pub memory: f64,
 }
 
+/// Unique key for identifying containers across multiple hosts
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+pub struct ContainerKey {
+    pub host_id: HostId,
+    pub container_id: String,
+}
+
+impl ContainerKey {
+    pub fn new(host_id: HostId, container_id: String) -> Self {
+        Self {
+            host_id,
+            container_id,
+        }
+    }
+}
+
 pub enum AppEvent {
-    /// Initial list of containers when app starts
-    InitialContainerList(Vec<Container>),
-    /// A new container was created/started
+    /// Initial list of containers when app starts for a specific host
+    InitialContainerList(HostId, Vec<Container>),
+    /// A new container was created/started (host_id is in the Container)
     ContainerCreated(Container),
-    /// A container was stopped/destroyed
-    ContainerDestroyed(String),
-    /// Stats update for an existing container
-    ContainerStat(String, ContainerStats),
+    /// A container was stopped/destroyed on a specific host
+    ContainerDestroyed(ContainerKey),
+    /// Stats update for an existing container on a specific host
+    ContainerStat(ContainerKey, ContainerStats),
     /// User requested to quit
     Quit,
     /// Terminal was resized

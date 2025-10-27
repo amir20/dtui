@@ -7,21 +7,34 @@ use futures_util::stream::StreamExt;
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::types::{AppEvent, Container, ContainerStats, EventSender};
+use crate::types::{AppEvent, Container, ContainerKey, ContainerStats, EventSender, HostId};
+
+/// Represents a Docker host connection with its identifier
+#[derive(Clone)]
+pub struct DockerHost {
+    pub host_id: HostId,
+    pub docker: Docker,
+}
+
+impl DockerHost {
+    pub fn new(host_id: HostId, docker: Docker) -> Self {
+        Self { host_id, docker }
+    }
+}
 
 /// Streams stats for a single container and sends updates via the event channel
 ///
 /// # Arguments
-/// * `docker` - Docker client instance
+/// * `host` - Docker host instance with identifier
 /// * `truncated_id` - Truncated container ID (12 chars) - Docker API accepts partial IDs
 /// * `tx` - Event sender channel
-pub async fn stream_container_stats(docker: Docker, truncated_id: String, tx: EventSender) {
+pub async fn stream_container_stats(host: DockerHost, truncated_id: String, tx: EventSender) {
     let stats_options = StatsOptions {
         stream: true,
         one_shot: false,
     };
 
-    let mut stats_stream = docker.stats(&truncated_id, Some(stats_options));
+    let mut stats_stream = host.docker.stats(&truncated_id, Some(stats_options));
 
     while let Some(result) = stats_stream.next().await {
         match result {
@@ -34,11 +47,8 @@ pub async fn stream_container_stats(docker: Docker, truncated_id: String, tx: Ev
                     memory: memory_percent,
                 };
 
-                if tx
-                    .send(AppEvent::ContainerStat(truncated_id.clone(), stats))
-                    .await
-                    .is_err()
-                {
+                let key = ContainerKey::new(host.host_id.clone(), truncated_id.clone());
+                if tx.send(AppEvent::ContainerStat(key, stats)).await.is_err() {
                     break;
                 }
             }
@@ -47,7 +57,8 @@ pub async fn stream_container_stats(docker: Docker, truncated_id: String, tx: Ev
     }
 
     // Notify that this container stream ended
-    let _ = tx.send(AppEvent::ContainerDestroyed(truncated_id)).await;
+    let key = ContainerKey::new(host.host_id, truncated_id);
+    let _ = tx.send(AppEvent::ContainerDestroyed(key)).await;
 }
 
 /// Calculates CPU usage percentage from container stats
@@ -101,20 +112,20 @@ pub fn calculate_memory_percentage(stats: &ContainerStatsResponse) -> f64 {
     }
 }
 
-/// Manages container monitoring: fetches initial containers and listens for Docker events
-pub async fn container_manager(docker: Docker, tx: EventSender) {
+/// Manages container monitoring for a specific Docker host: fetches initial containers and listens for Docker events
+pub async fn container_manager(host: DockerHost, tx: EventSender) {
     let mut active_containers: HashMap<String, tokio::task::JoinHandle<()>> = HashMap::new();
 
     // Fetch and start monitoring initial containers
-    fetch_initial_containers(&docker, &tx, &mut active_containers).await;
+    fetch_initial_containers(&host, &tx, &mut active_containers).await;
 
     // Subscribe to Docker events and handle container lifecycle
-    monitor_docker_events(&docker, &tx, &mut active_containers).await;
+    monitor_docker_events(&host, &tx, &mut active_containers).await;
 }
 
 /// Fetches the initial list of running containers and starts monitoring them
 async fn fetch_initial_containers(
-    docker: &Docker,
+    host: &DockerHost,
     tx: &EventSender,
     active_containers: &mut HashMap<String, tokio::task::JoinHandle<()>>,
 ) {
@@ -123,7 +134,7 @@ async fn fetch_initial_containers(
         ..Default::default()
     });
 
-    if let Ok(container_list) = docker.list_containers(list_options).await {
+    if let Ok(container_list) = host.docker.list_containers(list_options).await {
         let mut initial_containers = Vec::new();
 
         for container in container_list {
@@ -141,17 +152,21 @@ async fn fetch_initial_containers(
                 name: name.clone(),
                 status: status.clone(),
                 stats: ContainerStats::default(),
+                host_id: host.host_id.clone(),
             };
 
             initial_containers.push(container_info);
 
-            start_container_monitoring(docker, &truncated_id, tx, active_containers);
+            start_container_monitoring(host, &truncated_id, tx, active_containers);
         }
 
         // Send all initial containers in one event
         if !initial_containers.is_empty() {
             let _ = tx
-                .send(AppEvent::InitialContainerList(initial_containers))
+                .send(AppEvent::InitialContainerList(
+                    host.host_id.clone(),
+                    initial_containers,
+                ))
                 .await;
         }
     }
@@ -159,7 +174,7 @@ async fn fetch_initial_containers(
 
 /// Monitors Docker events for container start/stop/die events
 async fn monitor_docker_events(
-    docker: &Docker,
+    host: &DockerHost,
     tx: &EventSender,
     active_containers: &mut HashMap<String, tokio::task::JoinHandle<()>>,
 ) {
@@ -175,7 +190,7 @@ async fn monitor_docker_events(
         ..Default::default()
     };
 
-    let mut events_stream = docker.events(Some(events_options));
+    let mut events_stream = host.docker.events(Some(events_options));
 
     while let Some(event_result) = events_stream.next().await {
         match event_result {
@@ -186,11 +201,11 @@ async fn monitor_docker_events(
 
                     match action.as_str() {
                         "start" => {
-                            handle_container_start(docker, &container_id, tx, active_containers)
+                            handle_container_start(host, &container_id, tx, active_containers)
                                 .await;
                         }
                         "die" | "stop" => {
-                            handle_container_stop(&container_id, tx, active_containers).await;
+                            handle_container_stop(host, &container_id, tx, active_containers).await;
                         }
                         _ => {}
                     }
@@ -207,22 +222,22 @@ async fn monitor_docker_events(
 /// Starts monitoring a container by spawning a stats stream task
 ///
 /// # Arguments
-/// * `docker` - Docker client instance
+/// * `host` - Docker host instance with identifier
 /// * `truncated_id` - Truncated container ID (12 chars)
 /// * `tx` - Event sender channel
 /// * `active_containers` - Map of active container monitoring tasks
 fn start_container_monitoring(
-    docker: &Docker,
+    host: &DockerHost,
     truncated_id: &str,
     tx: &EventSender,
     active_containers: &mut HashMap<String, tokio::task::JoinHandle<()>>,
 ) {
     let tx_clone = tx.clone();
-    let docker_clone = docker.clone();
+    let host_clone = host.clone();
     let truncated_id_clone = truncated_id.to_string();
 
     let handle = tokio::spawn(async move {
-        stream_container_stats(docker_clone, truncated_id_clone, tx_clone).await;
+        stream_container_stats(host_clone, truncated_id_clone, tx_clone).await;
     });
 
     active_containers.insert(truncated_id.to_string(), handle);
@@ -230,7 +245,7 @@ fn start_container_monitoring(
 
 /// Handles a container start event
 async fn handle_container_start(
-    docker: &Docker,
+    host: &DockerHost,
     container_id: &str,
     tx: &EventSender,
     active_containers: &mut HashMap<String, tokio::task::JoinHandle<()>>,
@@ -238,7 +253,8 @@ async fn handle_container_start(
     let truncated_id = container_id[..12.min(container_id.len())].to_string();
 
     // Get container details
-    if let Ok(inspect) = docker
+    if let Ok(inspect) = host
+        .docker
         .inspect_container(container_id, None::<InspectContainerOptions>)
         .await
     {
@@ -262,17 +278,19 @@ async fn handle_container_start(
                 name: name.clone(),
                 status: status.clone(),
                 stats: ContainerStats::default(),
+                host_id: host.host_id.clone(),
             };
 
             let _ = tx.send(AppEvent::ContainerCreated(container)).await;
 
-            start_container_monitoring(docker, &truncated_id, tx, active_containers);
+            start_container_monitoring(host, &truncated_id, tx, active_containers);
         }
     }
 }
 
 /// Handles a container stop/die event
 async fn handle_container_stop(
+    host: &DockerHost,
     container_id: &str,
     tx: &EventSender,
     active_containers: &mut HashMap<String, tokio::task::JoinHandle<()>>,
@@ -282,7 +300,8 @@ async fn handle_container_stop(
     // Stop monitoring and notify removal
     if let Some(handle) = active_containers.remove(&truncated_id) {
         handle.abort();
-        let _ = tx.send(AppEvent::ContainerDestroyed(truncated_id)).await;
+        let key = ContainerKey::new(host.host_id.clone(), truncated_id);
+        let _ = tx.send(AppEvent::ContainerDestroyed(key)).await;
     }
 }
 

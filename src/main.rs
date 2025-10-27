@@ -15,23 +15,24 @@ use std::io;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
-use docker::container_manager;
+use docker::{DockerHost, container_manager};
 use input::keyboard_worker;
-use types::{AppEvent, Container};
+use types::{AppEvent, Container, ContainerKey};
 use ui::{UiStyles, render_ui};
 
 /// Docker container monitoring TUI
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Docker host to connect to
+    /// Docker host(s) to connect to. Can be specified multiple times.
     ///
     /// Examples:
     ///   --host local                    (Connect to local Docker daemon)
     ///   --host ssh://user@host          (Connect via SSH)
     ///   --host ssh://user@host:2222     (Connect via SSH with custom port)
+    ///   --host local --host ssh://user@server1 --host ssh://user@server2  (Multiple hosts)
     #[arg(short = 'H', long, default_value = "local")]
-    host: String,
+    host: Vec<String>,
 }
 
 #[tokio::main]
@@ -39,8 +40,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse command line arguments
     let args = Args::parse();
 
-    // Connect to Docker based on the host argument
-    let docker = connect_docker(&args.host)?;
+    // Ensure we have at least one host
+    let hosts = if args.host.is_empty() {
+        vec!["local".to_string()]
+    } else {
+        args.host
+    };
 
     // Setup terminal
     let mut terminal = setup_terminal()?;
@@ -48,8 +53,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create event channel
     let (tx, mut rx) = mpsc::channel::<AppEvent>(1000);
 
-    // Spawn container manager
-    spawn_container_manager(docker, tx.clone());
+    // Connect to all hosts and spawn container managers
+    for host_spec in hosts {
+        match connect_docker(&host_spec) {
+            Ok(docker) => {
+                // Create a unique host ID from the host spec
+                let host_id = create_host_id(&host_spec);
+                let docker_host = DockerHost::new(host_id.clone(), docker);
+
+                // Spawn container manager for this host
+                spawn_container_manager(docker_host, tx.clone());
+            }
+            Err(e) => {
+                // Log error but continue with other hosts
+                eprintln!("Failed to connect to host '{}': {}", host_spec, e);
+            }
+        }
+    }
 
     // Spawn keyboard worker in blocking thread
     spawn_keyboard_worker(tx.clone());
@@ -61,6 +81,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     cleanup_terminal(&mut terminal)?;
 
     Ok(())
+}
+
+/// Creates a unique host identifier from the host specification
+fn create_host_id(host_spec: &str) -> String {
+    if host_spec == "local" {
+        "local".to_string()
+    } else if host_spec.starts_with("ssh://") {
+        // Extract user@host from ssh://user@host[:port]
+        host_spec
+            .strip_prefix("ssh://")
+            .unwrap_or(host_spec)
+            .split(':')
+            .next()
+            .unwrap_or(host_spec)
+            .to_string()
+    } else {
+        host_spec.to_string()
+    }
 }
 
 /// Connects to Docker based on the host string
@@ -103,10 +141,10 @@ fn cleanup_terminal(
     Ok(())
 }
 
-/// Spawns the container manager task
-fn spawn_container_manager(docker: Docker, tx: mpsc::Sender<AppEvent>) {
+/// Spawns the container manager task for a specific host
+fn spawn_container_manager(docker_host: DockerHost, tx: mpsc::Sender<AppEvent>) {
     tokio::spawn(async move {
-        container_manager(docker, tx).await;
+        container_manager(docker_host, tx).await;
     });
 }
 
@@ -122,8 +160,9 @@ async fn run_event_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     rx: &mut mpsc::Receiver<AppEvent>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut containers: HashMap<String, Container> = HashMap::new();
-    let mut sorted_container_ids: Vec<String> = Vec::new(); // Pre-sorted list of container IDs
+    // Use ContainerKey (host_id, container_id) as the key
+    let mut containers: HashMap<ContainerKey, Container> = HashMap::new();
+    let mut sorted_container_keys: Vec<ContainerKey> = Vec::new(); // Pre-sorted list of container keys
     let mut should_quit = false;
     let mut table_state = TableState::default();
     let draw_interval = Duration::from_millis(500); // Refresh UI every 500ms
@@ -137,7 +176,7 @@ async fn run_event_loop(
         let force_draw = process_events(
             rx,
             &mut containers,
-            &mut sorted_container_ids,
+            &mut sorted_container_keys,
             &mut should_quit,
             &mut table_state,
             draw_interval,
@@ -152,7 +191,7 @@ async fn run_event_loop(
                 render_ui(
                     f,
                     &containers,
-                    &sorted_container_ids,
+                    &sorted_container_keys,
                     &styles,
                     &mut table_state,
                 );
@@ -169,8 +208,8 @@ async fn run_event_loop(
 /// Returns true if a force draw is needed (table structure changed)
 async fn process_events(
     rx: &mut mpsc::Receiver<AppEvent>,
-    containers: &mut HashMap<String, Container>,
-    sorted_container_ids: &mut Vec<String>,
+    containers: &mut HashMap<ContainerKey, Container>,
+    sorted_container_keys: &mut Vec<ContainerKey>,
     should_quit: &mut bool,
     table_state: &mut TableState,
     timeout: Duration,
@@ -183,7 +222,7 @@ async fn process_events(
             force_draw |= process_single_event(
                 event,
                 containers,
-                sorted_container_ids,
+                sorted_container_keys,
                 should_quit,
                 table_state,
             );
@@ -204,7 +243,7 @@ async fn process_events(
         force_draw |= process_single_event(
             event,
             containers,
-            sorted_container_ids,
+            sorted_container_keys,
             should_quit,
             table_state,
         );
@@ -217,23 +256,32 @@ async fn process_events(
 /// Returns true if this event requires an immediate draw (table structure changed)
 fn process_single_event(
     event: AppEvent,
-    containers: &mut HashMap<String, Container>,
-    sorted_container_ids: &mut Vec<String>,
+    containers: &mut HashMap<ContainerKey, Container>,
+    sorted_container_keys: &mut Vec<ContainerKey>,
     should_quit: &mut bool,
     table_state: &mut TableState,
 ) -> bool {
     match event {
-        AppEvent::InitialContainerList(container_list) => {
+        AppEvent::InitialContainerList(host_id, container_list) => {
             for container in container_list {
-                let id = container.id.clone();
-                containers.insert(id.clone(), container);
-                sorted_container_ids.push(id);
+                let key = ContainerKey::new(host_id.clone(), container.id.clone());
+                containers.insert(key.clone(), container);
+                sorted_container_keys.push(key);
             }
             // Sort once after adding all initial containers
-            sorted_container_ids.sort_by(|a, b| {
-                let name_a = containers.get(a).map(|c| &c.name).unwrap_or(a);
-                let name_b = containers.get(b).map(|c| &c.name).unwrap_or(b);
-                name_a.cmp(name_b)
+            // Sort by host_id first, then by container name
+            sorted_container_keys.sort_by(|a, b| {
+                let container_a = containers.get(a).unwrap();
+                let container_b = containers.get(b).unwrap();
+
+                // First compare by host_id
+                match container_a.host_id.cmp(&container_b.host_id) {
+                    std::cmp::Ordering::Equal => {
+                        // If same host, compare by name
+                        container_a.name.cmp(&container_b.name)
+                    }
+                    other => other,
+                }
             });
             // Select first row if we have containers
             if !containers.is_empty() {
@@ -242,21 +290,19 @@ fn process_single_event(
             true // Force draw - table structure changed
         }
         AppEvent::ContainerCreated(container) => {
-            let id = container.id.clone();
-            let name = container.name.clone();
-            containers.insert(id.clone(), container);
+            let key = ContainerKey::new(container.host_id.clone(), container.id.clone());
+            let sort_key = (container.host_id.clone(), container.name.clone());
+            containers.insert(key.clone(), container);
 
-            // Insert into sorted position
-            let insert_pos = sorted_container_ids
-                .binary_search_by(|probe_id| {
-                    let probe_name = containers
-                        .get(probe_id)
-                        .map(|c| &c.name)
-                        .unwrap_or(probe_id);
-                    probe_name.cmp(&name)
+            // Insert into sorted position (by host_id, then name)
+            let insert_pos = sorted_container_keys
+                .binary_search_by(|probe_key| {
+                    let probe_container = containers.get(probe_key).unwrap();
+                    let probe_sort_key = (&probe_container.host_id, &probe_container.name);
+                    probe_sort_key.cmp(&(&sort_key.0, &sort_key.1))
                 })
                 .unwrap_or_else(|pos| pos);
-            sorted_container_ids.insert(insert_pos, id);
+            sorted_container_keys.insert(insert_pos, key);
 
             // Select first row if this is the first container
             if containers.len() == 1 {
@@ -264,9 +310,9 @@ fn process_single_event(
             }
             true // Force draw - table structure changed
         }
-        AppEvent::ContainerDestroyed(id) => {
-            containers.remove(&id);
-            sorted_container_ids.retain(|cid| cid != &id);
+        AppEvent::ContainerDestroyed(key) => {
+            containers.remove(&key);
+            sorted_container_keys.retain(|k| k != &key);
 
             // Adjust selection if needed
             let container_count = containers.len();
@@ -279,9 +325,9 @@ fn process_single_event(
             }
             true // Force draw - table structure changed
         }
-        AppEvent::ContainerStat(id, stats) => {
+        AppEvent::ContainerStat(key, stats) => {
             // Update stats on existing container
-            if let Some(container) = containers.get_mut(&id) {
+            if let Some(container) = containers.get_mut(&key) {
                 container.stats = stats;
             }
             false // No force draw - just stats update

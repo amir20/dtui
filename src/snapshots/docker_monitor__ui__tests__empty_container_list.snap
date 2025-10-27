@@ -6,7 +6,7 @@ Buffer {
     area: Rect { x: 0, y: 0, width: 80, height: 20 },
     content: [
         "┌Docker Container CPU Monitor - 0 containers (↑/↓ to navigate, 'q' to quit)────┐",
-        "│Con  CPU %                        Memory %                     Status         │",
+        "│  Host                CPU %                Memory %            Status         │",
         "│                                                                              │",
         "│                                                                              │",
         "│                                                                              │",
