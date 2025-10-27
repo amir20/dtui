@@ -4,83 +4,123 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-env:
-  CARGO_TERM_COLOR: always
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-  build:
-    name: Build - ${{ matrix.platform.name }}
-    runs-on: ${{ matrix.platform.os }}
+  # Run 'dist plan' to determine what tasks we need to do
+  plan:
+    runs-on: "ubuntu-22.04"
+    outputs:
+      val: ${{ steps.plan.outputs.manifest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install dist
+        shell: bash
+        run: "curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.30.0/cargo-dist-installer.sh | sh"
+      - name: Cache dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-dist-cache
+          path: ~/.cargo/bin/dist
+      - id: plan
+        run: |
+          dist plan --output-format=json > plan-dist-manifest.json
+          echo "dist ran successfully"
+          cat plan-dist-manifest.json
+          echo "manifest=$(jq -c "." plan-dist-manifest.json)" >> "$GITHUB_OUTPUT"
+      - name: "Upload dist-manifest.json"
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-plan-dist-manifest
+          path: plan-dist-manifest.json
+
+  # Build and package all the platform-specific things
+  build-artifacts:
+    name: build-artifacts (${{ join(matrix.targets, ', ') }})
+    needs:
+      - plan
+    if: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix.include != null }}
     strategy:
       fail-fast: false
-      matrix:
-        platform:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            name: linux-x86_64
-            use_cross: false
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            name: linux-aarch64
-            use_cross: true
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            name: macos-x86_64
-            use_cross: false
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            name: macos-aarch64
-            use_cross: false
-
+      matrix: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix }}
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container && matrix.container.image || null }}
+    env:
+      BUILD_MANIFEST_NAME: target/distrib/${{ join(matrix.targets, '-') }}-dist-manifest.json
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform.target }}
-
-      - name: Install cross
-        if: matrix.platform.use_cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
-
-      - name: Build with cargo
-        if: ${{ !matrix.platform.use_cross }}
-        run: cargo build --release --target ${{ matrix.platform.target }}
-
-      - name: Build with cross
-        if: matrix.platform.use_cross
-        run: cross build --release --target ${{ matrix.platform.target }}
-
-      - name: Package binary
+      - name: enable windows longpaths
         run: |
-          cd target/${{ matrix.platform.target }}/release
-          tar czf docker-monitor-${{ matrix.platform.name }}.tar.gz docker-monitor
-          mv docker-monitor-${{ matrix.platform.name }}.tar.gz ${{ github.workspace }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v5
+          git config --global core.longpaths true
+      - uses: actions/checkout@v4
         with:
-          name: docker-monitor-pr-${{ github.event.pull_request.number }}-${{ matrix.platform.name }}
-          path: docker-monitor-${{ matrix.platform.name }}.tar.gz
+          persist-credentials: false
+          submodules: recursive
+      - name: Install Rust non-interactively if not already installed
+        if: ${{ matrix.container }}
+        run: |
+          if ! command -v cargo > /dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          fi
+      - name: Install dist
+        run: ${{ matrix.install_dist.run }}
+      # Get the dist-manifest
+      - name: Fetch local artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: target/distrib/
+          merge-multiple: true
+      - name: Install dependencies
+        run: |
+          ${{ matrix.packages_install }}
+      - name: Build artifacts
+        run: |
+          # Actually do builds and make zips and whatnot
+          dist build --print=linkage --output-format=json ${{ matrix.dist_args }} > dist-manifest.json
+          echo "dist ran successfully"
+      - id: cargo-dist
+        name: Post-build
+        shell: bash
+        run: |
+          # Parse out what we just built and upload it to scratch storage
+          echo "paths<<EOF" >> "$GITHUB_OUTPUT"
+          dist print-upload-files-from-manifest --manifest dist-manifest.json >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          cp dist-manifest.json "$BUILD_MANIFEST_NAME"
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-pr-${{ github.event.pull_request.number }}-${{ join(matrix.targets, '_') }}
+          path: |
+            ${{ steps.cargo-dist.outputs.paths }}
+            ${{ env.BUILD_MANIFEST_NAME }}
           retention-days: 30
 
   comment:
     name: Comment on PR
-    needs: build
+    needs:
+      - plan
+      - build-artifacts
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+    if: ${{ always() && (needs.build-artifacts.result == 'success' || needs.build-artifacts.result == 'failure') }}
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v6
+        if: needs.build-artifacts.result == 'success'
+        uses: actions/download-artifact@v4
         with:
+          pattern: artifacts-pr-${{ github.event.pull_request.number }}-*
           path: artifacts
 
       - name: Comment on PR with download links
+        if: needs.build-artifacts.result == 'success'
         uses: actions/github-script@v8
         with:
           script: |
@@ -102,6 +142,7 @@ jobs:
             - ✅ Linux ARM64
             - ✅ macOS x86_64 (Intel)
             - ✅ macOS ARM64 (Apple Silicon)
+            - ✅ Windows x86_64
 
             ### How to Download
             1. Click the link above
@@ -111,13 +152,14 @@ jobs:
 
             ### Install Example (Linux x86_64)
             \`\`\`bash
-            tar xzf docker-monitor-linux-x86_64.tar.gz
+            tar xzf docker-monitor-*.tar.gz
             chmod +x docker-monitor
             ./docker-monitor
             \`\`\`
 
             ---
-            *Artifacts will be available for 30 days*`;
+            *Artifacts will be available for 30 days*
+            *Built with cargo-dist v0.30.0*`;
 
             // Find existing bot comment
             const { data: comments } = await github.rest.issues.listComments({
@@ -150,7 +192,7 @@ jobs:
             }
 
       - name: Comment on build failure
-        if: failure()
+        if: needs.build-artifacts.result == 'failure'
         uses: actions/github-script@v8
         with:
           script: |
