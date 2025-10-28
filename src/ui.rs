@@ -2,11 +2,11 @@ use ratatui::{
     Frame,
     layout::Constraint,
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Cell, Row, Table, TableState},
+    widgets::{Block, Borders, Cell, Paragraph, Row, Table, TableState, Wrap},
 };
 use std::collections::HashMap;
 
-use crate::types::{Container, ContainerKey};
+use crate::types::{Container, ContainerKey, ViewState};
 
 /// Pre-allocated styles to avoid recreation every frame
 pub struct UiStyles {
@@ -35,8 +35,36 @@ impl Default for UiStyles {
     }
 }
 
-/// Renders the main UI table showing container stats
+/// Renders the main UI - either container list or log view
 pub fn render_ui(
+    f: &mut Frame,
+    containers: &HashMap<ContainerKey, Container>,
+    sorted_container_keys: &[ContainerKey],
+    styles: &UiStyles,
+    table_state: &mut TableState,
+    show_host_column: bool,
+    view_state: &ViewState,
+    container_logs: &HashMap<ContainerKey, Vec<String>>,
+) {
+    match view_state {
+        ViewState::ContainerList => {
+            render_container_list(
+                f,
+                containers,
+                sorted_container_keys,
+                styles,
+                table_state,
+                show_host_column,
+            );
+        }
+        ViewState::LogView(container_key) => {
+            render_log_view(f, container_key, containers, container_logs, styles);
+        }
+    }
+}
+
+/// Renders the container list view
+fn render_container_list(
     f: &mut Frame,
     containers: &HashMap<ContainerKey, Container>,
     sorted_container_keys: &[ContainerKey],
@@ -57,6 +85,47 @@ pub fn render_ui(
     let table = create_table(rows, header, containers.len(), styles, show_host_column);
 
     f.render_stateful_widget(table, size, table_state);
+}
+
+/// Renders the log view for a specific container
+fn render_log_view(
+    f: &mut Frame,
+    container_key: &ContainerKey,
+    containers: &HashMap<ContainerKey, Container>,
+    container_logs: &HashMap<ContainerKey, Vec<String>>,
+    styles: &UiStyles,
+) {
+    let size = f.area();
+
+    // Get container info
+    let container_name = containers
+        .get(container_key)
+        .map(|c| c.name.as_str())
+        .unwrap_or("Unknown");
+
+    // Get logs for this container
+    let logs = container_logs
+        .get(container_key)
+        .map(|l| l.as_slice())
+        .unwrap_or(&[]);
+
+    // Join all log lines
+    let log_text = logs.join("\n");
+
+    // Create log widget
+    let log_widget = Paragraph::new(log_text)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(format!(
+                    "Logs: {} ({}) - Press ESC to return",
+                    container_name, container_key.host_id
+                ))
+                .style(styles.border),
+        )
+        .wrap(Wrap { trim: false });
+
+    f.render_widget(log_widget, size);
 }
 
 /// Creates a table row for a single container
@@ -245,6 +314,9 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
+        let view_state = ViewState::ContainerList;
+        let container_logs = HashMap::new();
+
         terminal
             .draw(|f| {
                 render_ui(
@@ -254,6 +326,8 @@ mod tests {
                     &styles,
                     &mut table_state,
                     true,
+                    &view_state,
+                    &container_logs,
                 );
             })
             .unwrap();
@@ -281,6 +355,9 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
+        let view_state = ViewState::ContainerList;
+        let container_logs = HashMap::new();
+
         terminal
             .draw(|f| {
                 render_ui(
@@ -290,6 +367,8 @@ mod tests {
                     &styles,
                     &mut table_state,
                     false,
+                    &view_state,
+                    &container_logs,
                 );
             })
             .unwrap();
@@ -320,6 +399,9 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
+        let view_state = ViewState::ContainerList;
+        let container_logs = HashMap::new();
+
         terminal
             .draw(|f| {
                 render_ui(
@@ -329,6 +411,8 @@ mod tests {
                     &styles,
                     &mut table_state,
                     false,
+                    &view_state,
+                    &container_logs,
                 );
             })
             .unwrap();
@@ -384,6 +468,9 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
+        let view_state = ViewState::ContainerList;
+        let container_logs = HashMap::new();
+
         terminal
             .draw(|f| {
                 render_ui(
@@ -393,6 +480,8 @@ mod tests {
                     &styles,
                     &mut table_state,
                     false,
+                    &view_state,
+                    &container_logs,
                 );
             })
             .unwrap();
@@ -445,6 +534,9 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
+        let view_state = ViewState::ContainerList;
+        let container_logs = HashMap::new();
+
         terminal
             .draw(|f| {
                 render_ui(
@@ -454,6 +546,8 @@ mod tests {
                     &styles,
                     &mut table_state,
                     true,
+                    &view_state,
+                    &container_logs,
                 );
             })
             .unwrap();
@@ -481,6 +575,9 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
 
+        let view_state = ViewState::ContainerList;
+        let container_logs = HashMap::new();
+
         terminal
             .draw(|f| {
                 render_ui(
@@ -490,6 +587,8 @@ mod tests {
                     &styles,
                     &mut table_state,
                     true,
+                    &view_state,
+                    &container_logs,
                 )
             })
             .unwrap();
@@ -513,6 +612,10 @@ mod tests {
         let sorted_keys = vec![key];
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
+
+        let view_state = ViewState::ContainerList;
+        let container_logs = HashMap::new();
+
         terminal
             .draw(|f| {
                 render_ui(
@@ -522,6 +625,8 @@ mod tests {
                     &styles,
                     &mut table_state,
                     false,
+                    &view_state,
+                    &container_logs,
                 )
             })
             .unwrap();
@@ -557,6 +662,10 @@ mod tests {
         let sorted_keys = vec![key1, key2, key3];
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
+
+        let view_state = ViewState::ContainerList;
+        let container_logs = HashMap::new();
+
         terminal
             .draw(|f| {
                 render_ui(
@@ -566,6 +675,8 @@ mod tests {
                     &styles,
                     &mut table_state,
                     false,
+                    &view_state,
+                    &container_logs,
                 )
             })
             .unwrap();

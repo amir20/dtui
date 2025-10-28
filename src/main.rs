@@ -1,6 +1,7 @@
 mod config;
 mod docker;
 mod input;
+mod logs;
 mod stats;
 mod types;
 mod ui;
@@ -20,7 +21,8 @@ use tokio::sync::mpsc;
 use config::Config;
 use docker::{DockerHost, container_manager};
 use input::keyboard_worker;
-use types::{AppEvent, Container, ContainerKey};
+use logs::stream_container_logs;
+use types::{AppEvent, Container, ContainerKey, ViewState};
 use ui::{UiStyles, render_ui};
 
 /// Docker container monitoring TUI
@@ -81,6 +83,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create event channel
     let (tx, mut rx) = mpsc::channel::<AppEvent>(1000);
 
+    // Store DockerHost instances for log streaming
+    let mut connected_hosts: HashMap<String, DockerHost> = HashMap::new();
+
     // Connect to all hosts and spawn container managers
     for host_spec in hosts {
         match connect_docker(&host_spec) {
@@ -88,6 +93,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Create a unique host ID from the host spec
                 let host_id = create_host_id(&host_spec);
                 let docker_host = DockerHost::new(host_id.clone(), docker);
+
+                // Store the DockerHost for log streaming
+                connected_hosts.insert(host_id.clone(), docker_host.clone());
 
                 // Spawn container manager for this host
                 spawn_container_manager(docker_host, tx.clone());
@@ -103,7 +111,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     spawn_keyboard_worker(tx.clone());
 
     // Run main event loop
-    run_event_loop(&mut terminal, &mut rx).await?;
+    run_event_loop(&mut terminal, &mut rx, tx.clone(), connected_hosts).await?;
 
     // Restore terminal
     cleanup_terminal(&mut terminal)?;
@@ -200,6 +208,8 @@ fn spawn_keyboard_worker(tx: mpsc::Sender<AppEvent>) {
 async fn run_event_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     rx: &mut mpsc::Receiver<AppEvent>,
+    tx: mpsc::Sender<AppEvent>,
+    connected_hosts: HashMap<String, DockerHost>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Use ContainerKey (host_id, container_id) as the key
     let mut containers: HashMap<ContainerKey, Container> = HashMap::new();
@@ -208,6 +218,11 @@ async fn run_event_loop(
     let mut table_state = TableState::default();
     let draw_interval = Duration::from_millis(500); // Refresh UI every 500ms
     let mut last_draw = std::time::Instant::now();
+
+    // View state and log storage
+    let mut view_state = ViewState::ContainerList;
+    let mut container_logs: HashMap<ContainerKey, Vec<String>> = HashMap::new();
+    let mut log_stream_handle: Option<tokio::task::JoinHandle<()>> = None;
 
     // Pre-allocate styles to avoid recreation every frame
     let styles = UiStyles::default();
@@ -220,6 +235,11 @@ async fn run_event_loop(
             &mut sorted_container_keys,
             &mut should_quit,
             &mut table_state,
+            &mut view_state,
+            &mut container_logs,
+            &mut log_stream_handle,
+            &connected_hosts,
+            &tx,
             draw_interval,
         )
         .await;
@@ -241,6 +261,8 @@ async fn run_event_loop(
                     &styles,
                     &mut table_state,
                     show_host_column,
+                    &view_state,
+                    &container_logs,
                 );
             })?;
             last_draw = std::time::Instant::now();
@@ -259,6 +281,11 @@ async fn process_events(
     sorted_container_keys: &mut Vec<ContainerKey>,
     should_quit: &mut bool,
     table_state: &mut TableState,
+    view_state: &mut ViewState,
+    container_logs: &mut HashMap<ContainerKey, Vec<String>>,
+    log_stream_handle: &mut Option<tokio::task::JoinHandle<()>>,
+    connected_hosts: &HashMap<String, DockerHost>,
+    tx: &mpsc::Sender<AppEvent>,
     timeout: Duration,
 ) -> bool {
     let mut force_draw = false;
@@ -272,6 +299,11 @@ async fn process_events(
                 sorted_container_keys,
                 should_quit,
                 table_state,
+                view_state,
+                container_logs,
+                log_stream_handle,
+                connected_hosts,
+                tx,
             );
         }
         Ok(None) => {
@@ -293,6 +325,11 @@ async fn process_events(
             sorted_container_keys,
             should_quit,
             table_state,
+            view_state,
+            container_logs,
+            log_stream_handle,
+            connected_hosts,
+            tx,
         );
     }
 
@@ -307,6 +344,11 @@ fn process_single_event(
     sorted_container_keys: &mut Vec<ContainerKey>,
     should_quit: &mut bool,
     table_state: &mut TableState,
+    view_state: &mut ViewState,
+    container_logs: &mut HashMap<ContainerKey, Vec<String>>,
+    log_stream_handle: &mut Option<tokio::task::JoinHandle<()>>,
+    connected_hosts: &HashMap<String, DockerHost>,
+    tx: &mpsc::Sender<AppEvent>,
 ) -> bool {
     match event {
         AppEvent::InitialContainerList(host_id, container_list) => {
@@ -406,6 +448,75 @@ fn process_single_event(
                 }
             }
             true // Force draw - selection changed
+        }
+        AppEvent::EnterPressed => {
+            // Only handle Enter in ContainerList view
+            if *view_state == ViewState::ContainerList {
+                // Get the selected container
+                if let Some(selected_idx) = table_state.selected() {
+                    if let Some(container_key) = sorted_container_keys.get(selected_idx) {
+                        // Switch to log view
+                        *view_state = ViewState::LogView(container_key.clone());
+
+                        // Initialize log storage for this container
+                        container_logs
+                            .entry(container_key.clone())
+                            .or_insert_with(Vec::new);
+
+                        // Stop any existing log stream
+                        if let Some(handle) = log_stream_handle.take() {
+                            handle.abort();
+                        }
+
+                        // Start streaming logs for this container
+                        if let Some(host) = connected_hosts.get(&container_key.host_id) {
+                            let host_clone = host.clone();
+                            let container_id = container_key.container_id.clone();
+                            let tx_clone = tx.clone();
+
+                            let handle = tokio::spawn(async move {
+                                stream_container_logs(host_clone, container_id, tx_clone).await;
+                            });
+
+                            *log_stream_handle = Some(handle);
+                        }
+
+                        return true; // Force draw - view changed
+                    }
+                }
+            }
+            false
+        }
+        AppEvent::ExitLogView => {
+            // Only handle Escape when in log view
+            if matches!(*view_state, ViewState::LogView(_)) {
+                // Stop log streaming
+                if let Some(handle) = log_stream_handle.take() {
+                    handle.abort();
+                }
+
+                // Switch back to container list view
+                *view_state = ViewState::ContainerList;
+
+                return true; // Force draw - view changed
+            }
+            false
+        }
+        AppEvent::LogLine(key, log_line) => {
+            // Check if we should force draw before moving key
+            let should_draw = if let ViewState::LogView(current_key) = view_state {
+                current_key == &key
+            } else {
+                false
+            };
+
+            // Add log line to storage
+            container_logs
+                .entry(key)
+                .or_insert_with(Vec::new)
+                .push(log_line);
+
+            should_draw
         }
     }
 }
