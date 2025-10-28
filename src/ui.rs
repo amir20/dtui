@@ -102,21 +102,18 @@ fn render_log_view(
         .unwrap_or("Unknown");
 
     // Get logs for this container (only if it matches current_logs)
-    let logs = if let Some((key, logs)) = &state.current_logs {
+    let log_text = if let Some((key, logs)) = &state.current_logs {
         if key == container_key {
-            logs.as_slice()
+            logs.as_str()
         } else {
-            &[]
+            ""
         }
     } else {
-        &[]
+        ""
     };
 
-    // Join all log lines
-    let log_text = logs.join("");
-
     // Calculate the number of lines in the log text
-    let num_lines = logs.len();
+    let num_lines = log_text.lines().count();
 
     // Calculate visible height (subtract 2 for borders)
     let visible_height = size.height.saturating_sub(2) as usize;

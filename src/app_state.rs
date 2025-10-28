@@ -19,7 +19,7 @@ pub struct AppState {
     /// Current view (container list or log view)
     pub view_state: ViewState,
     /// Current container logs (only one container at a time)
-    pub current_logs: Option<(ContainerKey, Vec<String>)>,
+    pub current_logs: Option<(ContainerKey, String)>,
     /// Current scroll position (number of lines scrolled from top)
     pub log_scroll_offset: usize,
     /// Whether the user is at the bottom of the logs (for auto-scroll behavior)
@@ -200,7 +200,7 @@ impl AppState {
         self.view_state = ViewState::LogView(container_key.clone());
 
         // Initialize log storage for this container (clear any previous logs)
-        self.current_logs = Some((container_key.clone(), Vec::new()));
+        self.current_logs = Some((container_key.clone(), String::new()));
 
         // Reset scroll state - start at bottom
         self.log_scroll_offset = 0;
@@ -286,7 +286,7 @@ impl AppState {
         if let Some((current_key, logs)) = &mut self.current_logs
             && current_key == &key
         {
-            logs.push(log_line);
+            logs.push_str(&log_line);
 
             // Only auto-scroll if user is at the bottom
             if self.is_at_bottom {
