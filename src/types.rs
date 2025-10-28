@@ -1,5 +1,7 @@
 use tokio::sync::mpsc;
 
+use crate::logs::LogEntry;
+
 /// Host identifier for tracking which Docker host a container belongs to
 pub type HostId = String;
 
@@ -66,7 +68,7 @@ pub enum AppEvent {
     /// User scrolled down in log view
     ScrollDown,
     /// New log line received from streaming logs
-    LogLine(ContainerKey, String),
+    LogLine(ContainerKey, LogEntry),
 }
 
 pub type EventSender = mpsc::Sender<AppEvent>;
