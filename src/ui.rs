@@ -115,9 +115,23 @@ fn render_log_view(
     };
 
     // Join all log lines
-    let log_text = logs.join("\n");
+    let log_text = logs.join("");
 
-    // Create log widget
+    // Calculate the number of lines in the log text
+    let num_lines = logs.len();
+
+    // Calculate visible height (subtract 2 for borders)
+    let visible_height = size.height.saturating_sub(2) as usize;
+
+    // Calculate scroll offset to show the most recent logs
+    // If we have more lines than can fit, scroll to show the bottom
+    let scroll_offset = if num_lines > visible_height {
+        num_lines.saturating_sub(visible_height)
+    } else {
+        0
+    };
+
+    // Create log widget with scrolling to show most recent logs
     let log_widget = Paragraph::new(log_text)
         .block(
             Block::default()
@@ -128,7 +142,8 @@ fn render_log_view(
                 ))
                 .style(styles.border),
         )
-        .wrap(Wrap { trim: false });
+        .wrap(Wrap { trim: false })
+        .scroll((scroll_offset as u16, 0));
 
     f.render_widget(log_widget, size);
 }
