@@ -44,7 +44,7 @@ pub fn render_ui(
     table_state: &mut TableState,
     show_host_column: bool,
     view_state: &ViewState,
-    container_logs: &HashMap<ContainerKey, Vec<String>>,
+    current_logs: &Option<(ContainerKey, Vec<String>)>,
 ) {
     match view_state {
         ViewState::ContainerList => {
@@ -58,7 +58,7 @@ pub fn render_ui(
             );
         }
         ViewState::LogView(container_key) => {
-            render_log_view(f, container_key, containers, container_logs, styles);
+            render_log_view(f, container_key, containers, current_logs, styles);
         }
     }
 }
@@ -92,7 +92,7 @@ fn render_log_view(
     f: &mut Frame,
     container_key: &ContainerKey,
     containers: &HashMap<ContainerKey, Container>,
-    container_logs: &HashMap<ContainerKey, Vec<String>>,
+    current_logs: &Option<(ContainerKey, Vec<String>)>,
     styles: &UiStyles,
 ) {
     let size = f.area();
@@ -103,11 +103,16 @@ fn render_log_view(
         .map(|c| c.name.as_str())
         .unwrap_or("Unknown");
 
-    // Get logs for this container
-    let logs = container_logs
-        .get(container_key)
-        .map(|l| l.as_slice())
-        .unwrap_or(&[]);
+    // Get logs for this container (only if it matches current_logs)
+    let logs = if let Some((key, logs)) = current_logs {
+        if key == container_key {
+            logs.as_slice()
+        } else {
+            &[]
+        }
+    } else {
+        &[]
+    };
 
     // Join all log lines
     let log_text = logs.join("\n");

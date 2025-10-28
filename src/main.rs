@@ -1,3 +1,4 @@
+mod app_state;
 mod config;
 mod docker;
 mod input;
@@ -12,17 +13,17 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use ratatui::{Terminal, backend::CrosstermBackend, widgets::TableState};
+use ratatui::{Terminal, backend::CrosstermBackend};
 use std::collections::HashMap;
 use std::io;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
+use app_state::AppState;
 use config::Config;
 use docker::{DockerHost, container_manager};
 use input::keyboard_worker;
-use logs::stream_container_logs;
-use types::{AppEvent, Container, ContainerKey, ViewState};
+use types::AppEvent;
 use ui::{UiStyles, render_ui};
 
 /// Docker container monitoring TUI
@@ -211,38 +212,16 @@ async fn run_event_loop(
     tx: mpsc::Sender<AppEvent>,
     connected_hosts: HashMap<String, DockerHost>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Use ContainerKey (host_id, container_id) as the key
-    let mut containers: HashMap<ContainerKey, Container> = HashMap::new();
-    let mut sorted_container_keys: Vec<ContainerKey> = Vec::new(); // Pre-sorted list of container keys
-    let mut should_quit = false;
-    let mut table_state = TableState::default();
+    let mut state = AppState::new(connected_hosts, tx);
     let draw_interval = Duration::from_millis(500); // Refresh UI every 500ms
     let mut last_draw = std::time::Instant::now();
-
-    // View state and log storage
-    let mut view_state = ViewState::ContainerList;
-    let mut container_logs: HashMap<ContainerKey, Vec<String>> = HashMap::new();
-    let mut log_stream_handle: Option<tokio::task::JoinHandle<()>> = None;
 
     // Pre-allocate styles to avoid recreation every frame
     let styles = UiStyles::default();
 
-    while !should_quit {
+    while !state.should_quit {
         // Wait for events with timeout - handles both throttling and waiting
-        let force_draw = process_events(
-            rx,
-            &mut containers,
-            &mut sorted_container_keys,
-            &mut should_quit,
-            &mut table_state,
-            &mut view_state,
-            &mut container_logs,
-            &mut log_stream_handle,
-            &connected_hosts,
-            &tx,
-            draw_interval,
-        )
-        .await;
+        let force_draw = process_events(rx, &mut state, draw_interval).await;
 
         // Draw UI if forced (table structure changed) or if draw_interval has elapsed
         let should_draw = force_draw || last_draw.elapsed() >= draw_interval;
@@ -250,19 +229,19 @@ async fn run_event_loop(
         if should_draw {
             // Calculate unique hosts to determine if host column should be shown
             let unique_hosts: std::collections::HashSet<_> =
-                containers.keys().map(|key| &key.host_id).collect();
+                state.containers.keys().map(|key| &key.host_id).collect();
             let show_host_column = unique_hosts.len() > 1;
 
             terminal.draw(|f| {
                 render_ui(
                     f,
-                    &containers,
-                    &sorted_container_keys,
+                    &state.containers,
+                    &state.sorted_container_keys,
                     &styles,
-                    &mut table_state,
+                    &mut state.table_state,
                     show_host_column,
-                    &view_state,
-                    &container_logs,
+                    &state.view_state,
+                    &state.current_logs,
                 );
             })?;
             last_draw = std::time::Instant::now();
@@ -277,15 +256,7 @@ async fn run_event_loop(
 /// Returns true if a force draw is needed (table structure changed)
 async fn process_events(
     rx: &mut mpsc::Receiver<AppEvent>,
-    containers: &mut HashMap<ContainerKey, Container>,
-    sorted_container_keys: &mut Vec<ContainerKey>,
-    should_quit: &mut bool,
-    table_state: &mut TableState,
-    view_state: &mut ViewState,
-    container_logs: &mut HashMap<ContainerKey, Vec<String>>,
-    log_stream_handle: &mut Option<tokio::task::JoinHandle<()>>,
-    connected_hosts: &HashMap<String, DockerHost>,
-    tx: &mpsc::Sender<AppEvent>,
+    state: &mut AppState,
     timeout: Duration,
 ) -> bool {
     let mut force_draw = false;
@@ -293,22 +264,11 @@ async fn process_events(
     // Wait for first event with timeout
     match tokio::time::timeout(timeout, rx.recv()).await {
         Ok(Some(event)) => {
-            force_draw |= process_single_event(
-                event,
-                containers,
-                sorted_container_keys,
-                should_quit,
-                table_state,
-                view_state,
-                container_logs,
-                log_stream_handle,
-                connected_hosts,
-                tx,
-            );
+            force_draw |= state.handle_event(event);
         }
         Ok(None) => {
             // Channel closed
-            *should_quit = true;
+            state.should_quit = true;
             return false;
         }
         Err(_) => {
@@ -319,199 +279,8 @@ async fn process_events(
 
     // Drain any additional pending events without blocking
     while let Ok(event) = rx.try_recv() {
-        force_draw |= process_single_event(
-            event,
-            containers,
-            sorted_container_keys,
-            should_quit,
-            table_state,
-            view_state,
-            container_logs,
-            log_stream_handle,
-            connected_hosts,
-            tx,
-        );
+        force_draw |= state.handle_event(event);
     }
 
     force_draw
-}
-
-/// Processes a single event
-/// Returns true if this event requires an immediate draw (table structure changed)
-fn process_single_event(
-    event: AppEvent,
-    containers: &mut HashMap<ContainerKey, Container>,
-    sorted_container_keys: &mut Vec<ContainerKey>,
-    should_quit: &mut bool,
-    table_state: &mut TableState,
-    view_state: &mut ViewState,
-    container_logs: &mut HashMap<ContainerKey, Vec<String>>,
-    log_stream_handle: &mut Option<tokio::task::JoinHandle<()>>,
-    connected_hosts: &HashMap<String, DockerHost>,
-    tx: &mpsc::Sender<AppEvent>,
-) -> bool {
-    match event {
-        AppEvent::InitialContainerList(host_id, container_list) => {
-            for container in container_list {
-                let key = ContainerKey::new(host_id.clone(), container.id.clone());
-                containers.insert(key.clone(), container);
-                sorted_container_keys.push(key);
-            }
-            // Sort once after adding all initial containers
-            // Sort by host_id first, then by container name
-            sorted_container_keys.sort_by(|a, b| {
-                let container_a = containers.get(a).unwrap();
-                let container_b = containers.get(b).unwrap();
-
-                // First compare by host_id
-                match container_a.host_id.cmp(&container_b.host_id) {
-                    std::cmp::Ordering::Equal => {
-                        // If same host, compare by name
-                        container_a.name.cmp(&container_b.name)
-                    }
-                    other => other,
-                }
-            });
-            // Select first row if we have containers
-            if !containers.is_empty() {
-                table_state.select(Some(0));
-            }
-            true // Force draw - table structure changed
-        }
-        AppEvent::ContainerCreated(container) => {
-            let key = ContainerKey::new(container.host_id.clone(), container.id.clone());
-            let sort_key = (container.host_id.clone(), container.name.clone());
-            containers.insert(key.clone(), container);
-
-            // Insert into sorted position (by host_id, then name)
-            let insert_pos = sorted_container_keys
-                .binary_search_by(|probe_key| {
-                    let probe_container = containers.get(probe_key).unwrap();
-                    let probe_sort_key = (&probe_container.host_id, &probe_container.name);
-                    probe_sort_key.cmp(&(&sort_key.0, &sort_key.1))
-                })
-                .unwrap_or_else(|pos| pos);
-            sorted_container_keys.insert(insert_pos, key);
-
-            // Select first row if this is the first container
-            if containers.len() == 1 {
-                table_state.select(Some(0));
-            }
-            true // Force draw - table structure changed
-        }
-        AppEvent::ContainerDestroyed(key) => {
-            containers.remove(&key);
-            sorted_container_keys.retain(|k| k != &key);
-
-            // Adjust selection if needed
-            let container_count = containers.len();
-            if container_count == 0 {
-                table_state.select(None);
-            } else if let Some(selected) = table_state.selected()
-                && selected >= container_count
-            {
-                table_state.select(Some(container_count - 1));
-            }
-            true // Force draw - table structure changed
-        }
-        AppEvent::ContainerStat(key, stats) => {
-            // Update stats on existing container
-            if let Some(container) = containers.get_mut(&key) {
-                container.stats = stats;
-            }
-            false // No force draw - just stats update
-        }
-        AppEvent::Resize => {
-            // Just process the event - UI will redraw immediately after
-            true // Force draw - UI needs to adjust to new size
-        }
-        AppEvent::Quit => {
-            *should_quit = true;
-            false // No need to draw when quitting
-        }
-        AppEvent::SelectPrevious => {
-            let container_count = containers.len();
-            if container_count > 0 {
-                let selected = table_state.selected().unwrap_or(0);
-                if selected > 0 {
-                    table_state.select(Some(selected - 1));
-                }
-            }
-            true // Force draw - selection changed
-        }
-        AppEvent::SelectNext => {
-            let container_count = containers.len();
-            if container_count > 0 {
-                let selected = table_state.selected().unwrap_or(0);
-                if selected < container_count - 1 {
-                    table_state.select(Some(selected + 1));
-                }
-            }
-            true // Force draw - selection changed
-        }
-        AppEvent::EnterPressed => {
-            // Only handle Enter in ContainerList view
-            if *view_state == ViewState::ContainerList {
-                // Get the selected container
-                if let Some(selected_idx) = table_state.selected()
-                    && let Some(container_key) = sorted_container_keys.get(selected_idx)
-                {
-                    // Switch to log view
-                    *view_state = ViewState::LogView(container_key.clone());
-
-                    // Initialize log storage for this container
-                    container_logs.entry(container_key.clone()).or_default();
-
-                    // Stop any existing log stream
-                    if let Some(handle) = log_stream_handle.take() {
-                        handle.abort();
-                    }
-
-                    // Start streaming logs for this container
-                    if let Some(host) = connected_hosts.get(&container_key.host_id) {
-                        let host_clone = host.clone();
-                        let container_id = container_key.container_id.clone();
-                        let tx_clone = tx.clone();
-
-                        let handle = tokio::spawn(async move {
-                            stream_container_logs(host_clone, container_id, tx_clone).await;
-                        });
-
-                        *log_stream_handle = Some(handle);
-                    }
-
-                    return true; // Force draw - view changed
-                }
-            }
-            false
-        }
-        AppEvent::ExitLogView => {
-            // Only handle Escape when in log view
-            if matches!(*view_state, ViewState::LogView(_)) {
-                // Stop log streaming
-                if let Some(handle) = log_stream_handle.take() {
-                    handle.abort();
-                }
-
-                // Switch back to container list view
-                *view_state = ViewState::ContainerList;
-
-                return true; // Force draw - view changed
-            }
-            false
-        }
-        AppEvent::LogLine(key, log_line) => {
-            // Check if we should force draw before moving key
-            let should_draw = if let ViewState::LogView(current_key) = view_state {
-                current_key == &key
-            } else {
-                false
-            };
-
-            // Add log line to storage
-            container_logs.entry(key).or_default().push(log_line);
-
-            should_draw
-        }
-    }
 }
