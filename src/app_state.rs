@@ -20,6 +20,10 @@ pub struct AppState {
     pub view_state: ViewState,
     /// Current container logs (only one container at a time)
     pub current_logs: Option<(ContainerKey, Vec<String>)>,
+    /// Current scroll position (number of lines scrolled from top)
+    pub log_scroll_offset: usize,
+    /// Whether the user is at the bottom of the logs (for auto-scroll behavior)
+    pub is_at_bottom: bool,
     /// Handle to the currently running log stream task
     pub log_stream_handle: Option<tokio::task::JoinHandle<()>>,
     /// Connected Docker hosts for log streaming
@@ -41,6 +45,8 @@ impl AppState {
             table_state: TableState::default(),
             view_state: ViewState::ContainerList,
             current_logs: None,
+            log_scroll_offset: 0,
+            is_at_bottom: true,
             log_stream_handle: None,
             connected_hosts,
             event_tx,
@@ -65,6 +71,8 @@ impl AppState {
             AppEvent::SelectNext => self.handle_select_next(),
             AppEvent::EnterPressed => self.handle_enter_pressed(),
             AppEvent::ExitLogView => self.handle_exit_log_view(),
+            AppEvent::ScrollUp => self.handle_scroll_up(),
+            AppEvent::ScrollDown => self.handle_scroll_down(),
             AppEvent::LogLine(key, log_line) => self.handle_log_line(key, log_line),
         }
     }
@@ -194,6 +202,10 @@ impl AppState {
         // Initialize log storage for this container (clear any previous logs)
         self.current_logs = Some((container_key.clone(), Vec::new()));
 
+        // Reset scroll state - start at bottom
+        self.log_scroll_offset = 0;
+        self.is_at_bottom = true;
+
         // Stop any existing log stream
         if let Some(handle) = self.log_stream_handle.take() {
             handle.abort();
@@ -235,12 +247,52 @@ impl AppState {
         true // Force draw - view changed
     }
 
+    fn handle_scroll_up(&mut self) -> bool {
+        // Only handle scroll in log view
+        if !matches!(self.view_state, ViewState::LogView(_)) {
+            return false;
+        }
+
+        // Scroll up (decrease offset)
+        if self.log_scroll_offset > 0 {
+            self.log_scroll_offset = self.log_scroll_offset.saturating_sub(1);
+            self.is_at_bottom = false; // User scrolled away from bottom
+            return true; // Force draw
+        }
+
+        false
+    }
+
+    fn handle_scroll_down(&mut self) -> bool {
+        // Only handle scroll in log view
+        if !matches!(self.view_state, ViewState::LogView(_)) {
+            return false;
+        }
+
+        // Only scroll if we have logs
+        if self.current_logs.is_some() {
+            // Increment scroll offset
+            self.log_scroll_offset = self.log_scroll_offset.saturating_add(1);
+
+            // Will be clamped in UI and is_at_bottom will be recalculated there
+            return true; // Force draw
+        }
+
+        false
+    }
+
     fn handle_log_line(&mut self, key: ContainerKey, log_line: String) -> bool {
         // Only add log line if we're currently viewing this container's logs
         if let Some((current_key, logs)) = &mut self.current_logs
             && current_key == &key
         {
             logs.push(log_line);
+
+            // Only auto-scroll if user is at the bottom
+            if self.is_at_bottom {
+                // Scroll will be updated to show bottom in UI
+            }
+
             return true; // Force draw - new log line for currently viewed container
         }
 

@@ -61,6 +61,10 @@ pub enum AppEvent {
     EnterPressed,
     /// User pressed Escape to exit log view
     ExitLogView,
+    /// User scrolled up in log view
+    ScrollUp,
+    /// User scrolled down in log view
+    ScrollDown,
     /// New log line received from streaming logs
     LogLine(ContainerKey, String),
 }

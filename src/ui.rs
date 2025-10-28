@@ -6,6 +6,7 @@ use ratatui::{
 };
 use std::collections::HashMap;
 
+use crate::app_state::AppState;
 use crate::types::{Container, ContainerKey, ViewState};
 
 /// Pre-allocated styles to avoid recreation every frame
@@ -36,29 +37,26 @@ impl Default for UiStyles {
 }
 
 /// Renders the main UI - either container list or log view
-pub fn render_ui(
-    f: &mut Frame,
-    containers: &HashMap<ContainerKey, Container>,
-    sorted_container_keys: &[ContainerKey],
-    styles: &UiStyles,
-    table_state: &mut TableState,
-    show_host_column: bool,
-    view_state: &ViewState,
-    current_logs: &Option<(ContainerKey, Vec<String>)>,
-) {
-    match view_state {
+pub fn render_ui(f: &mut Frame, state: &mut AppState, styles: &UiStyles) {
+    match &state.view_state {
         ViewState::ContainerList => {
+            // Calculate unique hosts to determine if host column should be shown
+            let unique_hosts: std::collections::HashSet<_> =
+                state.containers.keys().map(|key| &key.host_id).collect();
+            let show_host_column = unique_hosts.len() > 1;
+
             render_container_list(
                 f,
-                containers,
-                sorted_container_keys,
+                &state.containers,
+                &state.sorted_container_keys,
                 styles,
-                table_state,
+                &mut state.table_state,
                 show_host_column,
             );
         }
         ViewState::LogView(container_key) => {
-            render_log_view(f, container_key, containers, current_logs, styles);
+            let container_key = container_key.clone();
+            render_log_view(f, &container_key, state, styles);
         }
     }
 }
@@ -91,20 +89,20 @@ fn render_container_list(
 fn render_log_view(
     f: &mut Frame,
     container_key: &ContainerKey,
-    containers: &HashMap<ContainerKey, Container>,
-    current_logs: &Option<(ContainerKey, Vec<String>)>,
+    state: &mut AppState,
     styles: &UiStyles,
 ) {
     let size = f.area();
 
     // Get container info
-    let container_name = containers
+    let container_name = state
+        .containers
         .get(container_key)
         .map(|c| c.name.as_str())
         .unwrap_or("Unknown");
 
     // Get logs for this container (only if it matches current_logs)
-    let logs = if let Some((key, logs)) = current_logs {
+    let logs = if let Some((key, logs)) = &state.current_logs {
         if key == container_key {
             logs.as_slice()
         } else {
@@ -123,27 +121,48 @@ fn render_log_view(
     // Calculate visible height (subtract 2 for borders)
     let visible_height = size.height.saturating_sub(2) as usize;
 
-    // Calculate scroll offset to show the most recent logs
-    // If we have more lines than can fit, scroll to show the bottom
-    let scroll_offset = if num_lines > visible_height {
+    // Calculate max scroll position
+    let max_scroll = if num_lines > visible_height {
         num_lines.saturating_sub(visible_height)
     } else {
         0
     };
 
-    // Create log widget with scrolling to show most recent logs
+    // Determine actual scroll offset
+    let actual_scroll = if state.is_at_bottom {
+        // Auto-scroll to bottom
+        max_scroll
+    } else {
+        // Use manual scroll position, but clamp to max
+        state.log_scroll_offset.min(max_scroll)
+    };
+
+    // Update is_at_bottom based on actual position
+    state.is_at_bottom = actual_scroll >= max_scroll;
+
+    // Update scroll offset to actual (for proper clamping)
+    state.log_scroll_offset = actual_scroll;
+
+    // Create log widget with scrolling
     let log_widget = Paragraph::new(log_text)
         .block(
             Block::default()
                 .borders(Borders::ALL)
                 .title(format!(
-                    "Logs: {} ({}) - Press ESC to return",
-                    container_name, container_key.host_id
+                    "Logs: {} ({}) - Press ESC to return | Lines: {} {}",
+                    container_name,
+                    container_key.host_id,
+                    num_lines,
+                    if state.is_at_bottom {
+                        "[AUTO]"
+                    } else {
+                        "[MANUAL]"
+                    }
                 ))
                 .style(styles.border),
         )
         .wrap(Wrap { trim: false })
-        .scroll((scroll_offset as u16, 0));
+        .scroll((actual_scroll as u16, 0));
 
     f.render_widget(log_widget, size);
 }
