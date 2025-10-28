@@ -60,7 +60,11 @@ pub fn render_ui(
 }
 
 /// Creates a table row for a single container
-fn create_container_row<'a>(container: &'a Container, styles: &UiStyles, show_host_column: bool) -> Row<'a> {
+fn create_container_row<'a>(
+    container: &'a Container,
+    styles: &UiStyles,
+    show_host_column: bool,
+) -> Row<'a> {
     let cpu_bar = create_progress_bar(container.stats.cpu, 20);
     let cpu_style = get_percentage_style(container.stats.cpu, styles);
 
@@ -139,9 +143,7 @@ fn create_header_row(styles: &UiStyles, show_host_column: bool) -> Row<'static> 
 
     headers.extend(vec!["CPU %", "Memory %", "Net TX", "Net RX", "Status"]);
 
-    Row::new(headers)
-        .style(styles.header)
-        .bottom_margin(1)
+    Row::new(headers).style(styles.header).bottom_margin(1)
 }
 
 /// Creates the complete table widget
@@ -245,7 +247,14 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, true);
+                render_ui(
+                    f,
+                    &containers,
+                    &sorted_keys,
+                    &styles,
+                    &mut table_state,
+                    true,
+                );
             })
             .unwrap();
 
@@ -274,7 +283,14 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false);
+                render_ui(
+                    f,
+                    &containers,
+                    &sorted_keys,
+                    &styles,
+                    &mut table_state,
+                    false,
+                );
             })
             .unwrap();
 
@@ -306,7 +322,14 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false);
+                render_ui(
+                    f,
+                    &containers,
+                    &sorted_keys,
+                    &styles,
+                    &mut table_state,
+                    false,
+                );
             })
             .unwrap();
 
@@ -363,7 +386,14 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false);
+                render_ui(
+                    f,
+                    &containers,
+                    &sorted_keys,
+                    &styles,
+                    &mut table_state,
+                    false,
+                );
             })
             .unwrap();
 
@@ -417,7 +447,14 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, true);
+                render_ui(
+                    f,
+                    &containers,
+                    &sorted_keys,
+                    &styles,
+                    &mut table_state,
+                    true,
+                );
             })
             .unwrap();
 
@@ -445,7 +482,16 @@ mod tests {
         let mut table_state = TableState::default();
 
         terminal
-            .draw(|f| render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, true))
+            .draw(|f| {
+                render_ui(
+                    f,
+                    &containers,
+                    &sorted_keys,
+                    &styles,
+                    &mut table_state,
+                    true,
+                )
+            })
             .unwrap();
 
         let buffer = terminal.backend().buffer();
@@ -468,7 +514,16 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
         terminal
-            .draw(|f| render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false))
+            .draw(|f| {
+                render_ui(
+                    f,
+                    &containers,
+                    &sorted_keys,
+                    &styles,
+                    &mut table_state,
+                    false,
+                )
+            })
             .unwrap();
 
         let buffer = terminal.backend().buffer();
@@ -503,7 +558,16 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
         terminal
-            .draw(|f| render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false))
+            .draw(|f| {
+                render_ui(
+                    f,
+                    &containers,
+                    &sorted_keys,
+                    &styles,
+                    &mut table_state,
+                    false,
+                )
+            })
             .unwrap();
 
         let buffer = terminal.backend().buffer();
