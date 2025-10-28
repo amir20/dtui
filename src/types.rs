@@ -57,6 +57,25 @@ pub enum AppEvent {
     SelectPrevious,
     /// Move selection down
     SelectNext,
+    /// User pressed Enter key
+    EnterPressed,
+    /// User pressed Escape to exit log view
+    ExitLogView,
+    /// User scrolled up in log view
+    ScrollUp,
+    /// User scrolled down in log view
+    ScrollDown,
+    /// New log line received from streaming logs
+    LogLine(ContainerKey, String),
 }
 
 pub type EventSender = mpsc::Sender<AppEvent>;
+
+/// Current view state of the application
+#[derive(Clone, Debug, PartialEq)]
+pub enum ViewState {
+    /// Viewing the container list
+    ContainerList,
+    /// Viewing logs for a specific container
+    LogView(ContainerKey),
+}

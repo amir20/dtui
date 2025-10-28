@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::types::{AppEvent, EventSender};
 
 /// Polls for keyboard input and terminal events
-/// Sends quit event when 'q' is pressed and resize event when terminal is resized
+/// Sends events for various key presses and terminal resize
 pub fn keyboard_worker(tx: EventSender) {
     loop {
         // Poll every 200ms - humans won't notice the difference
@@ -24,10 +24,20 @@ pub fn keyboard_worker(tx: EventSender) {
                         break;
                     }
                     KeyCode::Up => {
+                        // Send both events - handler will decide based on view state
                         let _ = tx.blocking_send(AppEvent::SelectPrevious);
+                        let _ = tx.blocking_send(AppEvent::ScrollUp);
                     }
                     KeyCode::Down => {
+                        // Send both events - handler will decide based on view state
                         let _ = tx.blocking_send(AppEvent::SelectNext);
+                        let _ = tx.blocking_send(AppEvent::ScrollDown);
+                    }
+                    KeyCode::Enter => {
+                        let _ = tx.blocking_send(AppEvent::EnterPressed);
+                    }
+                    KeyCode::Esc => {
+                        let _ = tx.blocking_send(AppEvent::ExitLogView);
                     }
                     _ => {}
                 },

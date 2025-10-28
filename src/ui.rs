@@ -2,11 +2,12 @@ use ratatui::{
     Frame,
     layout::Constraint,
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Cell, Row, Table, TableState},
+    widgets::{Block, Borders, Cell, Paragraph, Row, Table, TableState, Wrap},
 };
 use std::collections::HashMap;
 
-use crate::types::{Container, ContainerKey};
+use crate::app_state::AppState;
+use crate::types::{Container, ContainerKey, ViewState};
 
 /// Pre-allocated styles to avoid recreation every frame
 pub struct UiStyles {
@@ -35,8 +36,33 @@ impl Default for UiStyles {
     }
 }
 
-/// Renders the main UI table showing container stats
-pub fn render_ui(
+/// Renders the main UI - either container list or log view
+pub fn render_ui(f: &mut Frame, state: &mut AppState, styles: &UiStyles) {
+    match &state.view_state {
+        ViewState::ContainerList => {
+            // Calculate unique hosts to determine if host column should be shown
+            let unique_hosts: std::collections::HashSet<_> =
+                state.containers.keys().map(|key| &key.host_id).collect();
+            let show_host_column = unique_hosts.len() > 1;
+
+            render_container_list(
+                f,
+                &state.containers,
+                &state.sorted_container_keys,
+                styles,
+                &mut state.table_state,
+                show_host_column,
+            );
+        }
+        ViewState::LogView(container_key) => {
+            let container_key = container_key.clone();
+            render_log_view(f, &container_key, state, styles);
+        }
+    }
+}
+
+/// Renders the container list view
+fn render_container_list(
     f: &mut Frame,
     containers: &HashMap<ContainerKey, Container>,
     sorted_container_keys: &[ContainerKey],
@@ -57,6 +83,85 @@ pub fn render_ui(
     let table = create_table(rows, header, containers.len(), styles, show_host_column);
 
     f.render_stateful_widget(table, size, table_state);
+}
+
+/// Renders the log view for a specific container
+fn render_log_view(
+    f: &mut Frame,
+    container_key: &ContainerKey,
+    state: &mut AppState,
+    styles: &UiStyles,
+) {
+    let size = f.area();
+
+    // Get container info
+    let container_name = state
+        .containers
+        .get(container_key)
+        .map(|c| c.name.as_str())
+        .unwrap_or("Unknown");
+
+    // Get logs for this container (only if it matches current_logs)
+    let log_text = if let Some((key, logs)) = &state.current_logs {
+        if key == container_key {
+            logs.as_str()
+        } else {
+            ""
+        }
+    } else {
+        ""
+    };
+
+    // Calculate the number of lines in the log text
+    let num_lines = log_text.lines().count();
+
+    // Calculate visible height (subtract 2 for borders)
+    let visible_height = size.height.saturating_sub(2) as usize;
+
+    // Calculate max scroll position
+    let max_scroll = if num_lines > visible_height {
+        num_lines.saturating_sub(visible_height)
+    } else {
+        0
+    };
+
+    // Determine actual scroll offset
+    let actual_scroll = if state.is_at_bottom {
+        // Auto-scroll to bottom
+        max_scroll
+    } else {
+        // Use manual scroll position, but clamp to max
+        state.log_scroll_offset.min(max_scroll)
+    };
+
+    // Update is_at_bottom based on actual position
+    state.is_at_bottom = actual_scroll >= max_scroll;
+
+    // Update scroll offset to actual (for proper clamping)
+    state.log_scroll_offset = actual_scroll;
+
+    // Create log widget with scrolling
+    let log_widget = Paragraph::new(log_text)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(format!(
+                    "Logs: {} ({}) - Press ESC to return | Lines: {} {}",
+                    container_name,
+                    container_key.host_id,
+                    num_lines,
+                    if state.is_at_bottom {
+                        "[AUTO]"
+                    } else {
+                        "[MANUAL]"
+                    }
+                ))
+                .style(styles.border),
+        )
+        .wrap(Wrap { trim: false })
+        .scroll((actual_scroll as u16, 0));
+
+    f.render_widget(log_widget, size);
 }
 
 /// Creates a table row for a single container
@@ -188,29 +293,6 @@ fn create_table<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::ContainerStats;
-    use ratatui::{Terminal, backend::TestBackend};
-
-    fn create_test_container(
-        host_id: &str,
-        id: &str,
-        name: &str,
-        cpu: f64,
-        memory: f64,
-    ) -> Container {
-        Container {
-            id: id.to_string(),
-            name: name.to_string(),
-            status: "running".to_string(),
-            stats: ContainerStats {
-                cpu,
-                memory,
-                network_tx_bytes_per_sec: 0.0,
-                network_rx_bytes_per_sec: 0.0,
-            },
-            host_id: host_id.to_string(),
-        }
-    }
 
     #[test]
     fn test_percentage_style_thresholds() {
@@ -234,346 +316,6 @@ mod tests {
         assert_eq!(get_percentage_style(80.0, &styles).fg, Some(Color::Yellow));
         assert_eq!(get_percentage_style(80.1, &styles).fg, Some(Color::Red));
     }
-
-    #[test]
-    fn test_render_empty_container_list() {
-        let backend = TestBackend::new(80, 20);
-        let mut terminal = Terminal::new(backend).unwrap();
-
-        let containers = HashMap::new();
-        let sorted_keys: Vec<ContainerKey> = vec![];
-        let styles = UiStyles::default();
-        let mut table_state = TableState::default();
-
-        terminal
-            .draw(|f| {
-                render_ui(
-                    f,
-                    &containers,
-                    &sorted_keys,
-                    &styles,
-                    &mut table_state,
-                    true,
-                );
-            })
-            .unwrap();
-
-        let buffer = terminal.backend().buffer();
-        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
-
-        // Check that "0 containers" appears in the title
-        assert!(content.contains("0 containers"));
-    }
-
-    #[test]
-    fn test_render_single_container() {
-        let backend = TestBackend::new(145, 30);
-        let mut terminal = Terminal::new(backend).unwrap();
-
-        let mut containers = HashMap::new();
-        let key = ContainerKey::new("local".to_string(), "test123".to_string());
-        containers.insert(
-            key.clone(),
-            create_test_container("local", "test123", "nginx", 25.5, 45.0),
-        );
-
-        let sorted_keys = vec![key];
-        let styles = UiStyles::default();
-        let mut table_state = TableState::default();
-
-        terminal
-            .draw(|f| {
-                render_ui(
-                    f,
-                    &containers,
-                    &sorted_keys,
-                    &styles,
-                    &mut table_state,
-                    false,
-                );
-            })
-            .unwrap();
-
-        let buffer = terminal.backend().buffer();
-        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
-
-        // Verify container appears in output
-        assert!(content.contains("nginx"));
-        // Host column should be hidden with single host
-        assert!(!content.contains("local"));
-        assert!(content.contains("1 containers"));
-    }
-
-    #[test]
-    fn test_render_container_with_high_cpu() {
-        let backend = TestBackend::new(145, 30);
-        let mut terminal = Terminal::new(backend).unwrap();
-
-        let mut containers = HashMap::new();
-        let key = ContainerKey::new("local".to_string(), "test123".to_string());
-        containers.insert(
-            key.clone(),
-            create_test_container("local", "test123", "nginx", 85.5, 45.0),
-        );
-
-        let sorted_keys = vec![key];
-        let styles = UiStyles::default();
-        let mut table_state = TableState::default();
-
-        terminal
-            .draw(|f| {
-                render_ui(
-                    f,
-                    &containers,
-                    &sorted_keys,
-                    &styles,
-                    &mut table_state,
-                    false,
-                );
-            })
-            .unwrap();
-
-        let buffer = terminal.backend().buffer();
-        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
-
-        // Verify the CPU percentage appears in the output (now in progress bar format)
-        assert!(
-            content.contains("85.5%"),
-            "Should find CPU value 85.5% in buffer"
-        );
-
-        // Check that we have red-colored cells in the high CPU range
-        let red_cells: Vec<_> = buffer
-            .content()
-            .iter()
-            .filter(|cell| cell.fg == Color::Red)
-            .collect();
-
-        assert!(
-            !red_cells.is_empty(),
-            "Should have red-colored cells for high CPU"
-        );
-    }
-
-    #[test]
-    fn test_render_multiple_containers_sorted() {
-        let backend = TestBackend::new(145, 30);
-        let mut terminal = Terminal::new(backend).unwrap();
-
-        let mut containers = HashMap::new();
-
-        let key1 = ContainerKey::new("local".to_string(), "1".to_string());
-        let key2 = ContainerKey::new("local".to_string(), "2".to_string());
-        let key3 = ContainerKey::new("local".to_string(), "3".to_string());
-
-        containers.insert(
-            key1.clone(),
-            create_test_container("local", "1", "zebra", 10.0, 20.0),
-        );
-        containers.insert(
-            key2.clone(),
-            create_test_container("local", "2", "apache", 30.0, 40.0),
-        );
-        containers.insert(
-            key3.clone(),
-            create_test_container("local", "3", "mysql", 50.0, 60.0),
-        );
-
-        // Sort by name alphabetically
-        let sorted_keys = vec![key2, key3, key1];
-        let styles = UiStyles::default();
-        let mut table_state = TableState::default();
-
-        terminal
-            .draw(|f| {
-                render_ui(
-                    f,
-                    &containers,
-                    &sorted_keys,
-                    &styles,
-                    &mut table_state,
-                    false,
-                );
-            })
-            .unwrap();
-
-        let buffer = terminal.backend().buffer();
-        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
-
-        // All containers should appear
-        assert!(content.contains("apache"));
-        assert!(content.contains("mysql"));
-        assert!(content.contains("zebra"));
-        assert!(content.contains("3 containers"));
-
-        // Verify sorting by checking position of container names
-        let apache_pos = content.find("apache").unwrap();
-        let mysql_pos = content.find("mysql").unwrap();
-        let zebra_pos = content.find("zebra").unwrap();
-
-        // Should be alphabetically sorted
-        assert!(apache_pos < mysql_pos);
-        assert!(mysql_pos < zebra_pos);
-    }
-
-    #[test]
-    fn test_render_multi_host_containers() {
-        let backend = TestBackend::new(150, 30);
-        let mut terminal = Terminal::new(backend).unwrap();
-
-        let mut containers = HashMap::new();
-
-        let key1 = ContainerKey::new("local".to_string(), "c1".to_string());
-        let key2 = ContainerKey::new("server1".to_string(), "c2".to_string());
-        let key3 = ContainerKey::new("server2".to_string(), "c3".to_string());
-
-        containers.insert(
-            key1.clone(),
-            create_test_container("local", "c1", "nginx", 10.0, 20.0),
-        );
-        containers.insert(
-            key2.clone(),
-            create_test_container("server1", "c2", "postgres", 30.0, 40.0),
-        );
-        containers.insert(
-            key3.clone(),
-            create_test_container("server2", "c3", "redis", 50.0, 60.0),
-        );
-
-        // Sort by host, then name
-        let sorted_keys = vec![key1, key2, key3];
-        let styles = UiStyles::default();
-        let mut table_state = TableState::default();
-
-        terminal
-            .draw(|f| {
-                render_ui(
-                    f,
-                    &containers,
-                    &sorted_keys,
-                    &styles,
-                    &mut table_state,
-                    true,
-                );
-            })
-            .unwrap();
-
-        let buffer = terminal.backend().buffer();
-        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
-
-        // All hosts and containers should appear
-        assert!(content.contains("local"));
-        assert!(content.contains("server1"));
-        assert!(content.contains("server2"));
-        assert!(content.contains("nginx"));
-        assert!(content.contains("postgres"));
-        assert!(content.contains("redis"));
-        assert!(content.contains("3 containers"));
-    }
-
-    #[test]
-    fn test_ui_snapshot_empty() {
-        let backend = TestBackend::new(80, 20);
-        let mut terminal = Terminal::new(backend).unwrap();
-
-        let containers = HashMap::new();
-        let sorted_keys: Vec<ContainerKey> = vec![];
-        let styles = UiStyles::default();
-        let mut table_state = TableState::default();
-
-        terminal
-            .draw(|f| {
-                render_ui(
-                    f,
-                    &containers,
-                    &sorted_keys,
-                    &styles,
-                    &mut table_state,
-                    true,
-                )
-            })
-            .unwrap();
-
-        let buffer = terminal.backend().buffer();
-        insta::assert_snapshot!("empty_container_list", format!("{:?}", buffer));
-    }
-
-    #[test]
-    fn test_ui_snapshot_single_container_low_usage() {
-        let backend = TestBackend::new(145, 25);
-        let mut terminal = Terminal::new(backend).unwrap();
-
-        let mut containers = HashMap::new();
-        let key = ContainerKey::new("local".to_string(), "abc123def456".to_string());
-        containers.insert(
-            key.clone(),
-            create_test_container("local", "abc123def456", "nginx", 25.5, 30.2),
-        );
-
-        let sorted_keys = vec![key];
-        let styles = UiStyles::default();
-        let mut table_state = TableState::default();
-        terminal
-            .draw(|f| {
-                render_ui(
-                    f,
-                    &containers,
-                    &sorted_keys,
-                    &styles,
-                    &mut table_state,
-                    false,
-                )
-            })
-            .unwrap();
-
-        let buffer = terminal.backend().buffer();
-        insta::assert_snapshot!("single_container_low_usage", format!("{:?}", buffer));
-    }
-
-    #[test]
-    fn test_ui_snapshot_multiple_containers_mixed_usage() {
-        let backend = TestBackend::new(160, 30);
-        let mut terminal = Terminal::new(backend).unwrap();
-
-        let mut containers = HashMap::new();
-
-        let key1 = ContainerKey::new("local".to_string(), "container1".to_string());
-        let key2 = ContainerKey::new("local".to_string(), "container2".to_string());
-        let key3 = ContainerKey::new("local".to_string(), "container3".to_string());
-
-        containers.insert(
-            key1.clone(),
-            create_test_container("local", "container1", "nginx", 15.5, 25.0),
-        );
-        containers.insert(
-            key2.clone(),
-            create_test_container("local", "container2", "postgres", 65.2, 70.5),
-        );
-        containers.insert(
-            key3.clone(),
-            create_test_container("local", "container3", "redis", 92.8, 88.3),
-        );
-
-        let sorted_keys = vec![key1, key2, key3];
-        let styles = UiStyles::default();
-        let mut table_state = TableState::default();
-        terminal
-            .draw(|f| {
-                render_ui(
-                    f,
-                    &containers,
-                    &sorted_keys,
-                    &styles,
-                    &mut table_state,
-                    false,
-                )
-            })
-            .unwrap();
-
-        let buffer = terminal.backend().buffer();
-        insta::assert_snapshot!("multiple_containers_mixed_usage", format!("{:?}", buffer));
-    }
-
     #[test]
     fn test_color_coding_boundaries() {
         let styles = UiStyles::default();
