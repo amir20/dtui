@@ -228,6 +228,13 @@ async fn run_event_loop(
         let should_draw = force_draw || last_draw.elapsed() >= draw_interval;
 
         if should_draw {
+            // Calculate unique hosts to determine if host column should be shown
+            let unique_hosts: std::collections::HashSet<_> = containers
+                .keys()
+                .map(|key| &key.host_id)
+                .collect();
+            let show_host_column = unique_hosts.len() > 1;
+
             terminal.draw(|f| {
                 render_ui(
                     f,
@@ -235,6 +242,7 @@ async fn run_event_loop(
                     &sorted_container_keys,
                     &styles,
                     &mut table_state,
+                    show_host_column,
                 );
             })?;
             last_draw = std::time::Instant::now();

@@ -1,15 +1,14 @@
 ---
 source: src/ui.rs
-assertion_line: 453
 expression: "format!(\"{:?}\", buffer)"
 ---
 Buffer {
     area: Rect { x: 0, y: 0, width: 145, height: 25 },
     content: [
         "┌Docker Container CPU Monitor - 1 containers (↑/↓ to navigate, 'q' to quit)─────────────────────────────────────────────────────────────────────┐",
-        "│ID           Name      Host                 CPU %                        Memory %                     Net TX       Net RX       Status         │",
+        "│ID           Name                           CPU %                        Memory %                     Net TX       Net RX       Status         │",
         "│                                                                                                                                               │",
-        "│abc123def456 nginx     local                █████░░░░░░░░░░░░░░░  25.5%  ██████░░░░░░░░░░░░░░  30.2%  0B/s         0B/s         running        │",
+        "│abc123def456 nginx                          █████░░░░░░░░░░░░░░░  25.5%  ██████░░░░░░░░░░░░░░  30.2%  0B/s         0B/s         running        │",
         "│                                                                                                                                               │",
         "│                                                                                                                                               │",
         "│                                                                                                                                               │",

@@ -1,17 +1,16 @@
 ---
 source: src/ui.rs
-assertion_line: 488
 expression: "format!(\"{:?}\", buffer)"
 ---
 Buffer {
     area: Rect { x: 0, y: 0, width: 160, height: 30 },
     content: [
         "┌Docker Container CPU Monitor - 3 containers (↑/↓ to navigate, 'q' to quit)────────────────────────────────────────────────────────────────────────────────────┐",
-        "│ID           Name                     Host                 CPU %                        Memory %                     Net TX       Net RX       Status         │",
+        "│ID           Name                                          CPU %                        Memory %                     Net TX       Net RX       Status         │",
         "│                                                                                                                                                              │",
-        "│container1   nginx                    local                ███░░░░░░░░░░░░░░░░░  15.5%  █████░░░░░░░░░░░░░░░  25.0%  0B/s         0B/s         running        │",
-        "│container2   postgres                 local                █████████████░░░░░░░  65.2%  ██████████████░░░░░░  70.5%  0B/s         0B/s         running        │",
-        "│container3   redis                    local                ███████████████████░  92.8%  ██████████████████░░  88.3%  0B/s         0B/s         running        │",
+        "│container1   nginx                                         ███░░░░░░░░░░░░░░░░░  15.5%  █████░░░░░░░░░░░░░░░  25.0%  0B/s         0B/s         running        │",
+        "│container2   postgres                                      █████████████░░░░░░░  65.2%  ██████████████░░░░░░  70.5%  0B/s         0B/s         running        │",
+        "│container3   redis                                         ███████████████████░  92.8%  ██████████████████░░  88.3%  0B/s         0B/s         running        │",
         "│                                                                                                                                                              │",
         "│                                                                                                                                                              │",
         "│                                                                                                                                                              │",

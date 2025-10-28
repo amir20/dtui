@@ -42,6 +42,7 @@ pub fn render_ui(
     sorted_container_keys: &[ContainerKey],
     styles: &UiStyles,
     table_state: &mut TableState,
+    show_host_column: bool,
 ) {
     let size = f.area();
 
@@ -49,17 +50,17 @@ pub fn render_ui(
     let rows: Vec<Row> = sorted_container_keys
         .iter()
         .filter_map(|key| containers.get(key))
-        .map(|c| create_container_row(c, styles))
+        .map(|c| create_container_row(c, styles, show_host_column))
         .collect();
 
-    let header = create_header_row(styles);
-    let table = create_table(rows, header, containers.len(), styles);
+    let header = create_header_row(styles, show_host_column);
+    let table = create_table(rows, header, containers.len(), styles, show_host_column);
 
     f.render_stateful_widget(table, size, table_state);
 }
 
 /// Creates a table row for a single container
-fn create_container_row<'a>(container: &'a Container, styles: &UiStyles) -> Row<'a> {
+fn create_container_row<'a>(container: &'a Container, styles: &UiStyles, show_host_column: bool) -> Row<'a> {
     let cpu_bar = create_progress_bar(container.stats.cpu, 20);
     let cpu_style = get_percentage_style(container.stats.cpu, styles);
 
@@ -69,16 +70,24 @@ fn create_container_row<'a>(container: &'a Container, styles: &UiStyles) -> Row<
     let network_tx = format_bytes_per_sec(container.stats.network_tx_bytes_per_sec);
     let network_rx = format_bytes_per_sec(container.stats.network_rx_bytes_per_sec);
 
-    Row::new(vec![
+    let mut cells = vec![
         Cell::from(container.id.as_str()),
         Cell::from(container.name.as_str()),
-        Cell::from(container.host_id.as_str()),
+    ];
+
+    if show_host_column {
+        cells.push(Cell::from(container.host_id.as_str()));
+    }
+
+    cells.extend(vec![
         Cell::from(cpu_bar).style(cpu_style),
         Cell::from(memory_bar).style(memory_style),
         Cell::from(network_tx),
         Cell::from(network_rx),
         Cell::from(container.status.as_str()),
-    ])
+    ]);
+
+    Row::new(cells)
 }
 
 /// Creates a text-based progress bar with percentage
@@ -121,12 +130,18 @@ pub fn get_percentage_style(value: f64, styles: &UiStyles) -> Style {
 }
 
 /// Creates the table header row
-fn create_header_row(styles: &UiStyles) -> Row<'static> {
-    Row::new(vec![
-        "ID", "Name", "Host", "CPU %", "Memory %", "Net TX", "Net RX", "Status",
-    ])
-    .style(styles.header)
-    .bottom_margin(1)
+fn create_header_row(styles: &UiStyles, show_host_column: bool) -> Row<'static> {
+    let mut headers = vec!["ID", "Name"];
+
+    if show_host_column {
+        headers.push("Host");
+    }
+
+    headers.extend(vec!["CPU %", "Memory %", "Net TX", "Net RX", "Status"]);
+
+    Row::new(headers)
+        .style(styles.header)
+        .bottom_margin(1)
 }
 
 /// Creates the complete table widget
@@ -135,31 +150,37 @@ fn create_table<'a>(
     header: Row<'static>,
     container_count: usize,
     styles: &UiStyles,
+    show_host_column: bool,
 ) -> Table<'a> {
-    Table::new(
-        rows,
-        [
-            Constraint::Length(12), // Container ID
-            Constraint::Fill(1),    // Name (flexible)
-            Constraint::Length(20), // Host
-            Constraint::Length(28), // CPU progress bar (20 chars + " 100.0%")
-            Constraint::Length(28), // Memory progress bar (20 chars + " 100.0%")
-            Constraint::Length(12), // Network TX (1.23MB/s)
-            Constraint::Length(12), // Network RX (4.56MB/s)
-            Constraint::Length(15), // Status
-        ],
-    )
-    .header(header)
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(format!(
-                "Docker Container CPU Monitor - {} containers (↑/↓ to navigate, 'q' to quit)",
-                container_count
-            ))
-            .style(styles.border),
-    )
-    .row_highlight_style(styles.selected)
+    let mut constraints = vec![
+        Constraint::Length(12), // Container ID
+        Constraint::Fill(1),    // Name (flexible)
+    ];
+
+    if show_host_column {
+        constraints.push(Constraint::Length(20)); // Host
+    }
+
+    constraints.extend(vec![
+        Constraint::Length(28), // CPU progress bar (20 chars + " 100.0%")
+        Constraint::Length(28), // Memory progress bar (20 chars + " 100.0%")
+        Constraint::Length(12), // Network TX (1.23MB/s)
+        Constraint::Length(12), // Network RX (4.56MB/s)
+        Constraint::Length(15), // Status
+    ]);
+
+    Table::new(rows, constraints)
+        .header(header)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(format!(
+                    "Docker Container CPU Monitor - {} containers (↑/↓ to navigate, 'q' to quit)",
+                    container_count
+                ))
+                .style(styles.border),
+        )
+        .row_highlight_style(styles.selected)
 }
 
 #[cfg(test)]
@@ -224,7 +245,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state);
+                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, true);
             })
             .unwrap();
 
@@ -253,7 +274,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state);
+                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false);
             })
             .unwrap();
 
@@ -262,7 +283,8 @@ mod tests {
 
         // Verify container appears in output
         assert!(content.contains("nginx"));
-        assert!(content.contains("local"));
+        // Host column should be hidden with single host
+        assert!(!content.contains("local"));
         assert!(content.contains("1 containers"));
     }
 
@@ -284,7 +306,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state);
+                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false);
             })
             .unwrap();
 
@@ -341,7 +363,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state);
+                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false);
             })
             .unwrap();
 
@@ -395,7 +417,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state);
+                render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, true);
             })
             .unwrap();
 
@@ -423,7 +445,7 @@ mod tests {
         let mut table_state = TableState::default();
 
         terminal
-            .draw(|f| render_ui(f, &containers, &sorted_keys, &styles, &mut table_state))
+            .draw(|f| render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, true))
             .unwrap();
 
         let buffer = terminal.backend().buffer();
@@ -446,7 +468,7 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
         terminal
-            .draw(|f| render_ui(f, &containers, &sorted_keys, &styles, &mut table_state))
+            .draw(|f| render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false))
             .unwrap();
 
         let buffer = terminal.backend().buffer();
@@ -481,7 +503,7 @@ mod tests {
         let styles = UiStyles::default();
         let mut table_state = TableState::default();
         terminal
-            .draw(|f| render_ui(f, &containers, &sorted_keys, &styles, &mut table_state))
+            .draw(|f| render_ui(f, &containers, &sorted_keys, &styles, &mut table_state, false))
             .unwrap();
 
         let buffer = terminal.backend().buffer();
