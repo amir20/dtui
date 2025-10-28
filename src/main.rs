@@ -453,36 +453,34 @@ fn process_single_event(
             // Only handle Enter in ContainerList view
             if *view_state == ViewState::ContainerList {
                 // Get the selected container
-                if let Some(selected_idx) = table_state.selected() {
-                    if let Some(container_key) = sorted_container_keys.get(selected_idx) {
-                        // Switch to log view
-                        *view_state = ViewState::LogView(container_key.clone());
+                if let Some(selected_idx) = table_state.selected()
+                    && let Some(container_key) = sorted_container_keys.get(selected_idx)
+                {
+                    // Switch to log view
+                    *view_state = ViewState::LogView(container_key.clone());
 
-                        // Initialize log storage for this container
-                        container_logs
-                            .entry(container_key.clone())
-                            .or_insert_with(Vec::new);
+                    // Initialize log storage for this container
+                    container_logs.entry(container_key.clone()).or_default();
 
-                        // Stop any existing log stream
-                        if let Some(handle) = log_stream_handle.take() {
-                            handle.abort();
-                        }
-
-                        // Start streaming logs for this container
-                        if let Some(host) = connected_hosts.get(&container_key.host_id) {
-                            let host_clone = host.clone();
-                            let container_id = container_key.container_id.clone();
-                            let tx_clone = tx.clone();
-
-                            let handle = tokio::spawn(async move {
-                                stream_container_logs(host_clone, container_id, tx_clone).await;
-                            });
-
-                            *log_stream_handle = Some(handle);
-                        }
-
-                        return true; // Force draw - view changed
+                    // Stop any existing log stream
+                    if let Some(handle) = log_stream_handle.take() {
+                        handle.abort();
                     }
+
+                    // Start streaming logs for this container
+                    if let Some(host) = connected_hosts.get(&container_key.host_id) {
+                        let host_clone = host.clone();
+                        let container_id = container_key.container_id.clone();
+                        let tx_clone = tx.clone();
+
+                        let handle = tokio::spawn(async move {
+                            stream_container_logs(host_clone, container_id, tx_clone).await;
+                        });
+
+                        *log_stream_handle = Some(handle);
+                    }
+
+                    return true; // Force draw - view changed
                 }
             }
             false
@@ -511,10 +509,7 @@ fn process_single_event(
             };
 
             // Add log line to storage
-            container_logs
-                .entry(key)
-                .or_insert_with(Vec::new)
-                .push(log_line);
+            container_logs.entry(key).or_default().push(log_line);
 
             should_draw
         }
