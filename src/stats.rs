@@ -160,7 +160,7 @@ fn extract_network_bytes(stats: &ContainerStatsResponse) -> (Option<u64>, Option
     let mut total_tx = 0u64;
     let mut total_rx = 0u64;
 
-    for (_interface_name, interface_stats) in networks {
+    for interface_stats in networks.values() {
         total_tx += interface_stats.tx_bytes.unwrap_or(0);
         total_rx += interface_stats.rx_bytes.unwrap_or(0);
     }
