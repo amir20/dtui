@@ -2,6 +2,7 @@ use ratatui::{
     Frame,
     layout::Constraint,
     style::{Color, Modifier, Style},
+    text::{Line, Span},
     widgets::{Block, Borders, Cell, Paragraph, Row, Table, TableState, Wrap},
 };
 use std::collections::HashMap;
@@ -17,6 +18,7 @@ pub struct UiStyles {
     pub header: Style,
     pub border: Style,
     pub selected: Style,
+    pub timestamp: Style,
 }
 
 impl Default for UiStyles {
@@ -31,6 +33,9 @@ impl Default for UiStyles {
             border: Style::default().fg(Color::White),
             selected: Style::default()
                 .bg(Color::DarkGray)
+                .add_modifier(Modifier::BOLD),
+            timestamp: Style::default()
+                .fg(Color::Yellow)
                 .add_modifier(Modifier::BOLD),
         }
     }
@@ -102,18 +107,28 @@ fn render_log_view(
         .unwrap_or("Unknown");
 
     // Get logs for this container (only if it matches current_logs)
-    let log_text = if let Some((key, logs)) = &state.current_logs {
+    let (log_lines, num_lines) = if let Some((key, logs)) = &state.current_logs {
         if key == container_key {
-            logs.as_str()
+            // Format log entries into styled lines with colored timestamps
+            let lines: Vec<Line> = logs
+                .iter()
+                .map(|entry| {
+                    let timestamp_str = entry.timestamp.format("%Y-%m-%d %H:%M:%S").to_string();
+                    Line::from(vec![
+                        Span::styled(timestamp_str, styles.timestamp),
+                        Span::raw(" "),
+                        Span::raw(entry.message.clone()),
+                    ])
+                })
+                .collect();
+            let num_lines = lines.len();
+            (lines, num_lines)
         } else {
-            ""
+            (Vec::new(), 0)
         }
     } else {
-        ""
+        (Vec::new(), 0)
     };
-
-    // Calculate the number of lines in the log text
-    let num_lines = log_text.lines().count();
 
     // Calculate visible height (subtract 2 for borders)
     let visible_height = size.height.saturating_sub(2) as usize;
@@ -141,15 +156,14 @@ fn render_log_view(
     state.log_scroll_offset = actual_scroll;
 
     // Create log widget with scrolling
-    let log_widget = Paragraph::new(log_text)
+    let log_widget = Paragraph::new(log_lines)
         .block(
             Block::default()
                 .borders(Borders::ALL)
                 .title(format!(
-                    "Logs: {} ({}) - Press ESC to return | Lines: {} {}",
+                    "Logs: {} ({}) - Press ESC to return {}",
                     container_name,
                     container_key.host_id,
-                    num_lines,
                     if state.is_at_bottom {
                         "[AUTO]"
                     } else {
