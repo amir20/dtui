@@ -1,5 +1,5 @@
 # Multi-stage build for docker-monitor (amd64/arm64)
-FROM --platform=$BUILDPLATFORM rust:1.90-slim AS builder
+FROM --platform=$BUILDPLATFORM rust:1.91-slim AS builder
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
